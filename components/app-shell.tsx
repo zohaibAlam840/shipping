@@ -4,9 +4,10 @@
 // Mobile: native-app feel with a fixed bottom tab bar (safe-area aware).
 // Desktop: left sidebar.
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { Logo, LogoutIcon } from "@/components/icons";
+import { logoutAdmin } from "@/app/actions";
 
 export interface NavItem {
   href: string;
@@ -27,6 +28,12 @@ export function AppShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const handleLogout = async () => {
+    await logoutAdmin();
+    router.push("/admin/login");
+    router.refresh();
+  };
   const isActive = (item: NavItem) =>
     item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
@@ -62,7 +69,16 @@ export function AppShell({
             );
           })}
         </nav>
-        <div className="p-3 border-t border-line">
+        <div className="p-3 border-t border-line space-y-1">
+          {pathname.startsWith("/admin") && (
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50/50 hover:text-red-700 transition cursor-pointer border-0 bg-transparent text-left font-semibold"
+            >
+              <LogoutIcon width={20} height={20} />
+              Log out
+            </button>
+          )}
           <Link
             href="/"
             className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-muted hover:text-ink hover:bg-background transition"
@@ -83,6 +99,14 @@ export function AppShell({
               <span className="ml-auto rounded-full bg-brand-light text-brand text-[11px] font-bold px-2 py-0.5 uppercase">
                 {accent}
               </span>
+            )}
+            {pathname.startsWith("/admin") && (
+              <button
+                onClick={handleLogout}
+                className="ml-2 rounded-full border border-red-200 bg-red-50 text-red-700 text-[11px] font-bold px-2 py-0.5 uppercase hover:bg-red-100 cursor-pointer"
+              >
+                Log out
+              </button>
             )}
           </div>
         </header>

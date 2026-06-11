@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ChartIcon, BoxIcon, UsersIcon, AlertIcon } from "@/components/icons";
 
@@ -15,6 +16,12 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
+  if (pathname.startsWith("/admin/login")) {
+    return <>{children}</>;
+  }
+
   return (
     <AppShell items={NAV} title="YonelMa Admin" accent="Admin">
       {children}

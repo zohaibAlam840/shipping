@@ -1,7 +1,7 @@
 "use server";
 
-// Server actions: every write the app does goes through here.
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getOrderByCode } from "@/lib/db";
 import {
@@ -204,3 +204,30 @@ export async function trackByCode(code: string): Promise<Order | null> {
   if (!code.trim()) return null;
   return getOrderByCode(code);
 }
+
+export async function loginAdmin(formData: FormData) {
+  const username = formData.get("username") as string;
+  const password = formData.get("password") as string;
+
+  const adminUser = process.env.ADMIN_USERNAME || "admin";
+  const adminPass = process.env.ADMIN_PASSWORD;
+
+  if (username === adminUser && password === adminPass) {
+    const cookieStore = await cookies();
+    cookieStore.set("admin_session", "authenticated", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24, // 1 day
+      path: "/",
+    });
+    return { success: true };
+  }
+
+  return { error: "Invalid username or password" };
+}
+
+export async function logoutAdmin() {
+  const cookieStore = await cookies();
+  cookieStore.delete("admin_session");
+}
+
