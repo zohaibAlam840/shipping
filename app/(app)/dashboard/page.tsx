@@ -1,12 +1,12 @@
 import Link from "next/link";
 import {
-  ME,
   eur,
   fmtDate,
   statusIndex,
   STATUSES,
   type Order,
 } from "@/lib/data";
+import { requireUser } from "@/lib/auth";
 import { getOrdersByEmail } from "@/lib/db";
 import { Card, StatusBadge, PaymentBadge } from "@/components/ui";
 import { Donut, BarChart, HBars, PipelineProgress } from "@/components/charts";
@@ -57,7 +57,8 @@ function monthBuckets(orders: Order[], months = 6) {
 }
 
 export default async function DashboardPage() {
-  const orders = await getOrdersByEmail(ME.email);
+  const user = await requireUser();
+  const orders = await getOrdersByEmail(user.email);
 
   const active = orders.filter((o) => o.status !== "Delivered");
   const delivered = orders.filter((o) => o.status === "Delivered");
@@ -97,7 +98,7 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-            Salut, {ME.name.split(" ")[0]} 👋
+            Salut, {user.name.split(" ")[0]} 👋
           </h1>
           <p className="text-sm text-muted mt-0.5">
             {active.length

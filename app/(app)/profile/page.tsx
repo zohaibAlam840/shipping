@@ -1,11 +1,14 @@
-import Link from "next/link";
-import { ME } from "@/lib/data";
-import { Card, PageTitle, Field, inputCls } from "@/components/ui";
-import { UserIcon, LogoutIcon } from "@/components/icons";
+import { requireUser } from "@/lib/auth";
+import { Card, PageTitle } from "@/components/ui";
+import { UserIcon } from "@/components/icons";
+import { ProfileForm } from "./profile-form";
 
 export const metadata = { title: "Profile" };
+export const dynamic = "force-dynamic";
 
-export default function ProfilePage() {
+export default async function ProfilePage() {
+  const user = await requireUser();
+
   return (
     <div className="mx-auto max-w-xl">
       <PageTitle title="Profile" subtitle="Your details and preferences." />
@@ -16,25 +19,11 @@ export default function ProfilePage() {
             <UserIcon width={28} height={28} />
           </span>
           <div>
-            <p className="font-bold text-ink">{ME.name}</p>
-            <p className="text-sm text-muted">{ME.email}</p>
+            <p className="font-bold text-ink">{user.name}</p>
+            <p className="text-sm text-muted">{user.email}</p>
           </div>
         </div>
-        {/* Demo form — saving comes with the backend */}
-        <div className="space-y-3">
-          <Field label="Full name">
-            <input className={inputCls} defaultValue={ME.name} />
-          </Field>
-          <Field label="Phone">
-            <input className={inputCls} defaultValue={ME.phone} />
-          </Field>
-          <Field label="Address (pickup)">
-            <input className={inputCls} defaultValue={ME.address} />
-          </Field>
-          <button className="h-12 w-full rounded-full bg-brand font-semibold text-white hover:bg-brand-dark active:scale-[0.98] transition">
-            Save changes
-          </button>
-        </div>
+        <ProfileForm user={user} />
       </Card>
 
       <Card className="p-5 mb-4">
@@ -65,13 +54,6 @@ export default function ProfilePage() {
           </button>
         </div>
       </Card>
-
-      <Link
-        href="/"
-        className="mt-4 flex h-12 items-center justify-center gap-2 rounded-full border border-line bg-card font-semibold text-muted hover:text-ink transition"
-      >
-        <LogoutIcon width={18} height={18} /> Log out
-      </Link>
     </div>
   );
 }

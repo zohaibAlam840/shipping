@@ -2,10 +2,11 @@
 
 // Multi-step booking wizard: quote → recipient & parcel → drop-off → review → done.
 // Pure frontend for now; "confirm" fakes an order number.
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
-import { quote, eur, ME, type DeliveryOption } from "@/lib/data";
+import { quote, eur, type DeliveryOption } from "@/lib/data";
 import { createOrder } from "@/app/actions";
+import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { Calculator, DEFAULT_CALC, type CalcState } from "@/components/calculator";
 import { Card, PageTitle, Field, inputCls } from "@/components/ui";
 import { ArrowRightIcon, CheckIcon, PinIcon, TruckIcon, HomeIcon } from "@/components/icons";
@@ -30,12 +31,28 @@ export default function BookPage() {
   const [done, setDone] = useState<{ orderNumber: string; trackingNumber: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [sender, setSender] = useState({ name: "You", phone: "" });
   const [b, setB] = useState<BookingState>({
     calc: DEFAULT_CALC,
     recipient: { name: "", phone: "", address: "" },
     parcel: { weight: "", description: "", declaredValue: "", dimensions: "" },
     delivery: "Relay point",
   });
+
+  useEffect(() => {
+    createSupabaseBrowser()
+      .auth.getUser()
+      .then(({ data }) => {
+        const u = data.user;
+        if (u) {
+          const m = u.user_metadata ?? {};
+          setSender({
+            name: (m.full_name as string) || u.email?.split("@")[0] || "You",
+            phone: (m.phone as string) || "",
+          });
+        }
+      });
+  }, []);
 
   const q = quote({ ...b.calc, homeCollection: b.delivery === "Home collection" });
 
@@ -227,7 +244,7 @@ export default function BookPage() {
               {[
                 ["Route", `${b.calc.origin} → ${b.calc.destination}`],
                 ["Weight band", b.calc.band],
-                ["Sender", `${ME.name} · ${ME.phone}`],
+                ["Sender", `${sender.name}${sender.phone ? ` · ${sender.phone}` : ""}`],
                 ["Recipient", `${b.recipient.name} · ${b.recipient.phone}`],
                 ["Deliver to", b.recipient.address],
                 ["Contents", b.parcel.description],

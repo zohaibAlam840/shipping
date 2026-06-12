@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eur, fmtDate } from "@/lib/data";
+import { requireUser } from "@/lib/auth";
 import { getOrderById } from "@/lib/db";
 import { Card, PageTitle, StatusBadge, PaymentBadge, Timeline } from "@/components/ui";
 
@@ -12,8 +13,10 @@ export default async function ShipmentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const user = await requireUser();
   const order = await getOrderById(id);
-  if (!order) notFound();
+  // Only the owner may view their shipment.
+  if (!order || order.customerEmail !== user.email) notFound();
 
   return (
     <div className="mx-auto max-w-2xl">

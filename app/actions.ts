@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
+import { getSessionUser } from "@/lib/auth";
 import { getOrderByCode } from "@/lib/db";
 import {
   HOME_COLLECTION_FEE,
   INSURANCE_RATE,
-  ME,
   type Country,
   type DeliveryOption,
   type Order,
@@ -32,6 +32,9 @@ export interface CreateOrderInput {
 }
 
 export async function createOrder(input: CreateOrderInput) {
+  const user = await getSessionUser();
+  if (!user) return { error: "Please log in to book a shipment." };
+
   const db = supabaseAdmin();
 
   // Authoritative price from the DB, not from the client.
@@ -58,8 +61,8 @@ export async function createOrder(input: CreateOrderInput) {
       .insert({
         order_number: orderNumber,
         tracking_number: trackingNumber,
-        customer_name: ME.name,
-        customer_email: ME.email,
+        customer_name: user.name,
+        customer_email: user.email,
         origin: input.origin,
         destination: input.destination,
         band: input.band,
@@ -81,7 +84,7 @@ export async function createOrder(input: CreateOrderInput) {
       await db.from("status_log").insert({
         order_id: created.id,
         status: "Pending Confirmation",
-        by_who: ME.name,
+        by_who: user.name,
       });
       revalidatePath("/dashboard");
       revalidatePath("/shipments");

@@ -1,10 +1,14 @@
+"use client";
+
 import Link from "next/link";
+import { useActionState } from "react";
+import { loginCustomer } from "@/app/auth-actions";
 import { Field, inputCls } from "@/components/ui";
 import { Logo } from "@/components/icons";
 
-export const metadata = { title: "Log in" };
-
 export default function LoginPage() {
+  const [state, action, pending] = useActionState(loginCustomer, null);
+
   return (
     <div className="relative overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-brand-light/60 to-transparent" aria-hidden />
@@ -17,24 +21,24 @@ export default function LoginPage() {
           <p className="mt-1.5 text-sm text-muted">Log in to manage your shipments.</p>
         </div>
         <div className="rounded-3xl border border-line bg-card p-6 shadow-lift sm:p-8">
-          {/* Auth wiring comes with the backend phase */}
-          <form className="space-y-4" action="/dashboard">
+          <form action={action} className="space-y-4">
             <Field label="Email">
-              <input type="email" className={inputCls} placeholder="you@example.com" />
+              <input name="email" type="email" required className={inputCls} placeholder="you@example.com" />
             </Field>
             <Field label="Password">
-              <input type="password" className={inputCls} placeholder="••••••••" />
+              <input name="password" type="password" required className={inputCls} placeholder="••••••••" />
             </Field>
-            <div className="flex justify-end">
-              <Link href="#" className="text-xs font-semibold text-brand hover:underline">
-                Forgot password?
-              </Link>
-            </div>
+            {state?.error && (
+              <p className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm font-medium text-red-700">
+                {state.error}
+              </p>
+            )}
             <button
               type="submit"
-              className="h-[52px] w-full rounded-full bg-brand font-semibold text-white shadow-soft transition hover:bg-brand-dark active:scale-[0.98]"
+              disabled={pending}
+              className="h-[52px] w-full rounded-full bg-brand font-semibold text-white shadow-soft transition hover:bg-brand-dark active:scale-[0.98] disabled:opacity-60"
             >
-              Log in
+              {pending ? "Logging in…" : "Log in"}
             </button>
           </form>
         </div>

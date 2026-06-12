@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ME, eur, fmtDate } from "@/lib/data";
+import { eur, fmtDate } from "@/lib/data";
+import { requireUser } from "@/lib/auth";
 import { getOrdersByEmail } from "@/lib/db";
 import { Card, PageTitle, StatusBadge, PaymentBadge } from "@/components/ui";
 import { BoxIcon, ChevronRightIcon, PlusIcon } from "@/components/icons";
@@ -8,7 +9,8 @@ export const metadata = { title: "My shipments" };
 export const dynamic = "force-dynamic";
 
 export default async function ShipmentsPage() {
-  const orders = await getOrdersByEmail(ME.email);
+  const user = await requireUser();
+  const orders = await getOrdersByEmail(user.email);
   return (
     <div>
       <PageTitle
