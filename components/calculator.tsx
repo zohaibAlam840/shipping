@@ -78,26 +78,14 @@ export function Calculator({
 
   return (
     <div className="grid gap-4">
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="From">
-          <select
-            className={inputCls}
-            value={state.origin}
-            onChange={(e) => {
-              const origin = e.target.value as Country;
-              set({ origin, destination: origin === "France" ? "Senegal" : "France" });
-            }}
-          >
-            <option>France</option>
-            <option>Senegal</option>
-          </select>
-        </Field>
-        <Field label="To">
-          <input className={`${inputCls} bg-background`} value={state.destination} readOnly />
-        </Field>
-      </div>
+      {/* Single launch route: France → Sénégal (fixed) */}
+      <Field label="Destination">
+        <div className="flex items-center justify-center gap-3 rounded-xl border border-line bg-background px-4 h-12 text-[15px] font-semibold text-ink">
+          France <span className="text-brand">→</span> Sénégal
+        </div>
+      </Field>
 
-      <Field label="Parcel weight">
+      <Field label="Poids du colis">
         <div className="grid grid-cols-5 gap-1.5">
           {WEIGHT_BANDS.map((b) => (
             <button
@@ -120,17 +108,17 @@ export function Calculator({
       <Toggle
         checked={state.homeCollection}
         onChange={(v) => set({ homeCollection: v })}
-        label="Home collection"
-        hint={`We pick up from your address (+${eur(HOME_COLLECTION_FEE)})`}
+        label="Enlèvement à domicile"
+        hint={`Nous récupérons le colis chez vous (+${eur(HOME_COLLECTION_FEE)})`}
       />
       <Toggle
         checked={state.insurance}
         onChange={(v) => set({ insurance: v })}
-        label="Insurance"
-        hint={`Covers declared value (${(INSURANCE_RATE * 100).toFixed(0)}% of value)`}
+        label="Assurance"
+        hint={`Couvre la valeur déclarée (${(INSURANCE_RATE * 100).toFixed(0)} % de la valeur)`}
       />
       {state.insurance && (
-        <Field label="Declared value (€)">
+        <Field label="Valeur déclarée (€)">
           <input
             type="number"
             min={0}
@@ -145,7 +133,7 @@ export function Calculator({
         <Card className="p-4 bg-brand-light/50 !border-brand/25">
           <div className="flex items-end justify-between gap-3">
             <div className="text-sm text-muted space-y-0.5">
-              <p>Base price <span className="font-semibold text-ink">{eur(q.basePrice)}</span></p>
+              <p>Prix de base <span className="font-semibold text-ink">{eur(q.basePrice)}</span></p>
               {q.optionsFee > 0 && (
                 <p>Options <span className="font-semibold text-ink">{eur(q.optionsFee)}</span></p>
               )}

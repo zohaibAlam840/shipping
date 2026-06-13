@@ -12,8 +12,8 @@ export default function CalculatorPage() {
   return (
     <div className="mx-auto w-full max-w-xl px-4 sm:px-6 py-8 sm:py-12">
       <PageTitle
-        title="Price calculator"
-        subtitle="Get an instant quote — no account needed."
+        title="Calculateur de prix"
+        subtitle="Obtenez un devis instantané — aucun compte requis."
       />
       <Card className="p-5 sm:p-6">
         <Calculator state={state} onChange={setState} />
@@ -21,7 +21,7 @@ export default function CalculatorPage() {
           href="/book"
           className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand font-semibold text-white hover:bg-brand-dark active:scale-[0.98] transition"
         >
-          Continue to booking <ArrowRightIcon width={18} height={18} />
+          Continuer vers la réservation <ArrowRightIcon width={18} height={18} />
         </Link>
       </Card>
     </div>

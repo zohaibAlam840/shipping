@@ -4,7 +4,10 @@ import {
   STATUSES,
   statusIndex,
   fmtDateTime,
+  STATUS_FR,
+  PAYMENT_FR,
   type OrderStatus,
+  type PaymentStatus,
   type StatusEvent,
 } from "@/lib/data";
 import { CheckIcon, AlertIcon } from "@/components/icons";
@@ -83,7 +86,7 @@ export function StatusBadge({ status, incident }: { status: OrderStatus; inciden
       <span
         className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${STATUS_STYLES[status] ?? "bg-gray-50 text-gray-700 border-gray-200"}`}
       >
-        {status}
+        {STATUS_FR[status]}
       </span>
       {incident && (
         <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-semibold text-red-700 whitespace-nowrap">
@@ -94,7 +97,7 @@ export function StatusBadge({ status, incident }: { status: OrderStatus; inciden
   );
 }
 
-export function PaymentBadge({ payment }: { payment: "Unpaid" | "Paid" | "Refunded" }) {
+export function PaymentBadge({ payment }: { payment: PaymentStatus }) {
   const styles =
     payment === "Paid"
       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
@@ -103,7 +106,7 @@ export function PaymentBadge({ payment }: { payment: "Unpaid" | "Paid" | "Refund
         : "bg-amber-50 text-amber-700 border-amber-200";
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${styles}`}>
-      {payment}
+      {PAYMENT_FR[payment]}
     </span>
   );
 }
@@ -135,7 +138,7 @@ export function Timeline({ log, current }: { log: StatusEvent[]; current: OrderS
               <CheckIcon width={13} height={13} strokeWidth={2.6} />
             </span>
             <div className="min-w-0 -mt-0.5">
-              <p className={`text-sm font-semibold ${done ? "text-ink" : "text-muted/60"}`}>{s}</p>
+              <p className={`text-sm font-semibold ${done ? "text-ink" : "text-muted/60"}`}>{STATUS_FR[s]}</p>
               {ev && (
                 <p className="text-xs text-muted mt-0.5">
                   {fmtDateTime(ev.at)} · {ev.by}
@@ -152,7 +155,7 @@ export function Timeline({ log, current }: { log: StatusEvent[]; current: OrderS
             <AlertIcon width={13} height={13} strokeWidth={2.4} />
           </span>
           <div className="-mt-0.5">
-            <p className="text-sm font-semibold text-red-600">Incident reported</p>
+            <p className="text-sm font-semibold text-red-600">Incident signalé</p>
             <p className="text-xs text-muted mt-0.5">
               {fmtDateTime(e.at)} · {e.by}
               {e.note && <span className="block text-muted/80">{e.note}</span>}

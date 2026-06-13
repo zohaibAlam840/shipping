@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eur, fmtDate } from "@/lib/data";
+import { eur, fmtDate, COUNTRY_FR, DELIVERY_FR } from "@/lib/data";
 import { requireUser } from "@/lib/auth";
 import { getOrderById } from "@/lib/db";
 import { Card, PageTitle, StatusBadge, PaymentBadge, Timeline } from "@/components/ui";
@@ -21,12 +21,12 @@ export default async function ShipmentDetailPage({
   return (
     <div className="mx-auto max-w-2xl">
       <Link href="/shipments" className="text-sm font-semibold text-brand">
-        ← All shipments
+        ← Tous les envois
       </Link>
       <div className="mt-3">
         <PageTitle
-          title={`${order.origin} → ${order.destination}`}
-          subtitle={`${order.orderNumber} · booked ${fmtDate(order.date)}`}
+          title={`${COUNTRY_FR[order.origin]} → ${COUNTRY_FR[order.destination]}`}
+          subtitle={`${order.orderNumber} · réservé le ${fmtDate(order.date)}`}
         />
       </div>
 
@@ -36,9 +36,9 @@ export default async function ShipmentDetailPage({
       </div>
 
       <Card className="p-5 mb-4">
-        <h2 className="font-bold text-ink mb-4">Tracking</h2>
+        <h2 className="font-bold text-ink mb-4">Suivi</h2>
         <p className="text-xs text-muted mb-4">
-          Tracking number{" "}
+          Numéro de suivi{" "}
           <span className="font-mono font-bold text-ink">{order.trackingNumber}</span>
         </p>
         <Timeline log={order.log} current={order.status} />
@@ -46,20 +46,20 @@ export default async function ShipmentDetailPage({
 
       <div className="grid sm:grid-cols-2 gap-4">
         <Card className="p-5">
-          <h2 className="font-bold text-ink mb-3">Recipient</h2>
+          <h2 className="font-bold text-ink mb-3">Destinataire</h2>
           <dl className="space-y-2 text-sm">
-            <div><dt className="text-muted text-xs">Name</dt><dd className="font-semibold text-ink">{order.recipient.name}</dd></div>
-            <div><dt className="text-muted text-xs">Phone</dt><dd className="font-semibold text-ink">{order.recipient.phone}</dd></div>
-            <div><dt className="text-muted text-xs">Address</dt><dd className="font-semibold text-ink">{order.recipient.address}</dd></div>
+            <div><dt className="text-muted text-xs">Nom</dt><dd className="font-semibold text-ink">{order.recipient.name}</dd></div>
+            <div><dt className="text-muted text-xs">Téléphone</dt><dd className="font-semibold text-ink">{order.recipient.phone}</dd></div>
+            <div><dt className="text-muted text-xs">Adresse</dt><dd className="font-semibold text-ink">{order.recipient.address}</dd></div>
           </dl>
         </Card>
         <Card className="p-5">
-          <h2 className="font-bold text-ink mb-3">Parcel & price</h2>
+          <h2 className="font-bold text-ink mb-3">Colis et prix</h2>
           <dl className="space-y-2 text-sm">
-            <div><dt className="text-muted text-xs">Contents</dt><dd className="font-semibold text-ink">{order.parcel.description}</dd></div>
-            <div><dt className="text-muted text-xs">Weight / size</dt><dd className="font-semibold text-ink">{order.parcel.weightKg} kg · {order.parcel.dimensions}</dd></div>
-            <div><dt className="text-muted text-xs">Delivery option</dt><dd className="font-semibold text-ink">{order.delivery}</dd></div>
-            <div><dt className="text-muted text-xs">Insurance</dt><dd className="font-semibold text-ink">{order.insurance ? `Yes — value ${eur(order.parcel.declaredValue)}` : "No"}</dd></div>
+            <div><dt className="text-muted text-xs">Contenu</dt><dd className="font-semibold text-ink">{order.parcel.description}</dd></div>
+            <div><dt className="text-muted text-xs">Poids / taille</dt><dd className="font-semibold text-ink">{order.parcel.weightKg} kg · {order.parcel.dimensions}</dd></div>
+            <div><dt className="text-muted text-xs">Option de livraison</dt><dd className="font-semibold text-ink">{DELIVERY_FR[order.delivery]}</dd></div>
+            <div><dt className="text-muted text-xs">Assurance</dt><dd className="font-semibold text-ink">{order.insurance ? `Oui — valeur ${eur(order.parcel.declaredValue)}` : "Non"}</dd></div>
             <div className="pt-2 border-t border-line flex items-center justify-between">
               <dt className="font-semibold text-ink">Total</dt>
               <dd className="text-xl font-bold text-brand">{eur(order.total)}</dd>

@@ -17,15 +17,15 @@ export default function LoginPage() {
           <div className="mb-4 flex justify-center">
             <Logo size={48} />
           </div>
-          <h1 className="text-[28px] font-extrabold tracking-tight text-ink">Welcome back</h1>
-          <p className="mt-1.5 text-sm text-muted">Log in to manage your shipments.</p>
+          <h1 className="text-[28px] font-extrabold tracking-tight text-ink">Bon retour</h1>
+          <p className="mt-1.5 text-sm text-muted">Connectez-vous pour gérer vos envois.</p>
         </div>
         <div className="rounded-3xl border border-line bg-card p-6 shadow-lift sm:p-8">
           <form action={action} className="space-y-4">
-            <Field label="Email">
-              <input name="email" type="email" required className={inputCls} placeholder="you@example.com" />
+            <Field label="E-mail">
+              <input name="email" type="email" required className={inputCls} placeholder="vous@exemple.com" />
             </Field>
-            <Field label="Password">
+            <Field label="Mot de passe">
               <input name="password" type="password" required className={inputCls} placeholder="••••••••" />
             </Field>
             {state?.error && (
@@ -38,14 +38,14 @@ export default function LoginPage() {
               disabled={pending}
               className="h-[52px] w-full rounded-full bg-brand font-semibold text-white shadow-soft transition hover:bg-brand-dark active:scale-[0.98] disabled:opacity-60"
             >
-              {pending ? "Logging in…" : "Log in"}
+              {pending ? "Connexion…" : "Se connecter"}
             </button>
           </form>
         </div>
         <p className="mt-6 text-center text-sm text-muted">
-          New to YonelMa?{" "}
+          Nouveau sur YonelMa ?{" "}
           <Link href="/signup" className="font-semibold text-brand hover:underline">
-            Create an account
+            Créer un compte
           </Link>
         </p>
       </div>

@@ -4,6 +4,8 @@ import {
   fmtDate,
   statusIndex,
   STATUSES,
+  COUNTRY_FR,
+  STATUS_FR,
   type Order,
 } from "@/lib/data";
 import { requireUser } from "@/lib/auth";
@@ -70,15 +72,15 @@ export default async function DashboardPage() {
   // Status phase breakdown for the donut.
   const prep = orders.filter((o) => PREP_STATUSES.includes(o.status)).length;
   const phases = [
-    { label: "Preparing", value: prep, color: "#f5b418" },
-    { label: "In transit", value: inTransit.length, color: "#6366f1" },
-    { label: "Delivered", value: delivered.length, color: "#0b8457" },
+    { label: "En préparation", value: prep, color: "#f5b418" },
+    { label: "En transit", value: inTransit.length, color: "#6366f1" },
+    { label: "Livré", value: delivered.length, color: "#0b8457" },
   ].filter((p) => p.value > 0);
 
   // Destinations breakdown.
   const destMap = new Map<string, number>();
   for (const o of orders) {
-    const route = `${o.origin} → ${o.destination}`;
+    const route = `${COUNTRY_FR[o.origin]} → ${COUNTRY_FR[o.destination]}`;
     destMap.set(route, (destMap.get(route) ?? 0) + 1);
   }
   const routes = [...destMap.entries()]
@@ -102,8 +104,8 @@ export default async function DashboardPage() {
           </h1>
           <p className="text-sm text-muted mt-0.5">
             {active.length
-              ? `You have ${active.length} shipment${active.length > 1 ? "s" : ""} on the move.`
-              : "Everything delivered — ready for the next one."}
+              ? `Vous avez ${active.length} envoi${active.length > 1 ? "s" : ""} en cours.`
+              : "Tout est livré — prêt pour le prochain."}
           </p>
         </div>
         <div className="flex gap-2.5">
@@ -111,23 +113,23 @@ export default async function DashboardPage() {
             href="/book"
             className="inline-flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-dark active:scale-[0.97]"
           >
-            <PlusIcon width={18} height={18} /> Ship a parcel
+            <PlusIcon width={18} height={18} /> Envoyer un colis
           </Link>
           <Link
             href="/track"
             className="inline-flex h-11 items-center gap-2 rounded-full border border-line bg-card px-5 text-sm font-semibold text-ink transition hover:border-brand/40 active:scale-[0.97]"
           >
-            <SearchIcon width={18} height={18} className="text-brand" /> Track
+            <SearchIcon width={18} height={18} className="text-brand" /> Suivi
           </Link>
         </div>
       </div>
 
       {/* ---- KPI row ---- */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Total shipments" value={String(orders.length)} sub={`${active.length} active now`} icon={<BoxIcon width={18} height={18} />} tone="brand" />
-        <KpiCard label="In transit" value={String(inTransit.length)} sub="on the move" icon={<PlaneIcon width={18} height={18} />} tone="indigo" />
-        <KpiCard label="Delivered" value={String(delivered.length)} sub={`${orders.length ? Math.round((delivered.length / orders.length) * 100) : 0}% success rate`} icon={<CheckIcon width={18} height={18} />} tone="emerald" />
-        <KpiCard label="Total spent" value={eur(spend)} sub={`avg ${eur(avg)} / parcel`} icon={<ChartIcon width={18} height={18} />} tone="amber" />
+        <KpiCard label="Total envois" value={String(orders.length)} sub={`${active.length} actif${active.length > 1 ? "s" : ""}`} icon={<BoxIcon width={18} height={18} />} tone="brand" />
+        <KpiCard label="En transit" value={String(inTransit.length)} sub="en cours d'acheminement" icon={<PlaneIcon width={18} height={18} />} tone="indigo" />
+        <KpiCard label="Livrés" value={String(delivered.length)} sub={`${orders.length ? Math.round((delivered.length / orders.length) * 100) : 0} % de réussite`} icon={<CheckIcon width={18} height={18} />} tone="emerald" />
+        <KpiCard label="Total dépensé" value={eur(spend)} sub={`moy. ${eur(avg)} / colis`} icon={<ChartIcon width={18} height={18} />} tone="amber" />
       </div>
 
       {/* ---- Active shipment focus ---- */}
@@ -138,10 +140,10 @@ export default async function DashboardPage() {
             <div className="relative">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/70">
-                  <span className="flex h-2 w-2 rounded-full bg-accent animate-pulse" /> Active shipment
+                  <span className="flex h-2 w-2 rounded-full bg-accent animate-pulse" /> Envoi en cours
                 </div>
                 <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold backdrop-blur">
-                  {focus.status}
+                  {STATUS_FR[focus.status]}
                 </span>
               </div>
               <div className="mt-4 flex items-center gap-4">
@@ -150,10 +152,10 @@ export default async function DashboardPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="font-display text-lg font-bold leading-tight">
-                    {focus.origin} → {focus.destination}
+                    {COUNTRY_FR[focus.origin]} → {COUNTRY_FR[focus.destination]}
                   </p>
                   <p className="text-sm text-white/70">
-                    {focus.trackingNumber} · {focus.band} · to {focus.recipient.name}
+                    {focus.trackingNumber} · {focus.band} · pour {focus.recipient.name}
                   </p>
                 </div>
                 <ArrowRightIcon width={20} height={20} className="hidden shrink-0 text-white/60 sm:block" />
@@ -170,42 +172,42 @@ export default async function DashboardPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display font-bold text-ink">Shipping activity</h2>
-            <span className="text-xs font-medium text-muted">Last 6 months</span>
+            <h2 className="font-display font-bold text-ink">Activité d'expédition</h2>
+            <span className="text-xs font-medium text-muted">6 derniers mois</span>
           </div>
           <BarChart data={monthly} />
         </Card>
 
         <Card className="p-5">
-          <h2 className="font-display font-bold text-ink mb-4">Status breakdown</h2>
+          <h2 className="font-display font-bold text-ink mb-4">Répartition des statuts</h2>
           {phases.length ? (
-            <Donut segments={phases} centerValue={String(orders.length)} centerLabel="total parcels" />
+            <Donut segments={phases} centerValue={String(orders.length)} centerLabel="colis au total" />
           ) : (
-            <p className="text-sm text-muted">No shipments yet.</p>
+            <p className="text-sm text-muted">Aucun envoi pour le moment.</p>
           )}
         </Card>
 
         <Card className="p-5">
-          <h2 className="font-display font-bold text-ink mb-4">Top routes</h2>
-          {routes.length ? <HBars data={routes} /> : <p className="text-sm text-muted">No routes yet.</p>}
+          <h2 className="font-display font-bold text-ink mb-4">Principaux trajets</h2>
+          {routes.length ? <HBars data={routes} /> : <p className="text-sm text-muted">Aucun trajet pour le moment.</p>}
         </Card>
 
         <Card className="p-5 lg:col-span-2">
-          <h2 className="font-display font-bold text-ink mb-4">Spending summary</h2>
+          <h2 className="font-display font-bold text-ink mb-4">Résumé des dépenses</h2>
           <div className="grid grid-cols-3 gap-4">
-            <MiniStat label="Lifetime spend" value={eur(spend)} />
-            <MiniStat label="Avg / parcel" value={eur(avg)} />
-            <MiniStat label="Paid orders" value={String(paid.length)} />
+            <MiniStat label="Dépenses totales" value={eur(spend)} />
+            <MiniStat label="Moy. / colis" value={eur(avg)} />
+            <MiniStat label="Commandes payées" value={String(paid.length)} />
           </div>
           <div className="mt-5 rounded-2xl bg-brand-light/50 p-4">
             <div className="flex items-center gap-2 text-sm text-ink">
               <ClockIcon width={16} height={16} className="text-brand" />
               {inTransit.length > 0 ? (
                 <span>
-                  <span className="font-semibold">{inTransit.length} parcel{inTransit.length > 1 ? "s" : ""}</span> currently in transit between France and Senegal.
+                  <span className="font-semibold">{inTransit.length} colis</span> actuellement en transit entre la France et le Sénégal.
                 </span>
               ) : (
-                <span>No parcels in transit right now.</span>
+                <span>Aucun colis en transit pour le moment.</span>
               )}
             </div>
           </div>
@@ -215,9 +217,9 @@ export default async function DashboardPage() {
       {/* ---- Recent shipments ---- */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-base font-bold text-ink">Recent shipments</h2>
+          <h2 className="font-display text-base font-bold text-ink">Envois récents</h2>
           <Link href="/shipments" className="text-sm font-semibold text-brand">
-            View all →
+            Voir tout →
           </Link>
         </div>
         <div className="space-y-3">
@@ -230,7 +232,7 @@ export default async function DashboardPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold text-ink text-sm truncate">
-                      {o.origin} → {o.destination} · {o.band}
+                      {COUNTRY_FR[o.origin]} → {COUNTRY_FR[o.destination]} · {o.band}
                     </p>
                     <p className="font-bold text-ink text-sm shrink-0">{eur(o.total)}</p>
                   </div>
@@ -249,10 +251,10 @@ export default async function DashboardPage() {
           {orders.length === 0 && (
             <Card className="p-8 text-center">
               <BoxIcon width={32} height={32} className="mx-auto text-muted mb-2" />
-              <p className="font-semibold text-ink">No shipments yet</p>
-              <p className="text-sm text-muted mt-1 mb-4">Send your first parcel to get started.</p>
+              <p className="font-semibold text-ink">Aucun envoi pour le moment</p>
+              <p className="text-sm text-muted mt-1 mb-4">Envoyez votre premier colis pour commencer.</p>
               <Link href="/book" className="inline-flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-sm font-semibold text-white">
-                <PlusIcon width={18} height={18} /> Ship a parcel
+                <PlusIcon width={18} height={18} /> Envoyer un colis
               </Link>
             </Card>
           )}

@@ -1,10 +1,10 @@
-import { fmtDate } from "@/lib/data";
+import { fmtDate, CLAIM_TYPE_FR, CLAIM_STATUS_FR } from "@/lib/data";
 import { getClaims } from "@/lib/db";
 import { Card, PageTitle } from "@/components/ui";
 import { AlertIcon } from "@/components/icons";
 import { ClaimActions } from "./claim-actions";
 
-export const metadata = { title: "Claims" };
+export const metadata = { title: "Réclamations" };
 export const dynamic = "force-dynamic";
 
 const CLAIM_STYLES: Record<string, string> = {
@@ -18,7 +18,7 @@ export default async function AdminClaimsPage() {
   const claims = await getClaims();
   return (
     <div>
-      <PageTitle title="Claims & incidents" subtitle={`${claims.length} total`} />
+      <PageTitle title="Réclamations et incidents" subtitle={`${claims.length} au total`} />
       <div className="space-y-3">
         {claims.map((c) => (
           <Card key={c.id} className="p-4">
@@ -29,14 +29,14 @@ export default async function AdminClaimsPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <p className="font-semibold text-ink text-sm">
-                    {c.type} · {c.orderNumber}
+                    {CLAIM_TYPE_FR[c.type] ?? c.type} · {c.orderNumber}
                   </p>
                   <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${CLAIM_STYLES[c.status] ?? "bg-gray-50 text-gray-700 border-gray-200"}`}>
-                    {c.status}
+                    {CLAIM_STATUS_FR[c.status] ?? c.status}
                   </span>
                 </div>
                 <p className="text-xs text-muted mt-0.5">
-                  {c.customer} · opened {fmtDate(c.opened)}
+                  {c.customer} · ouvert le {fmtDate(c.opened)}
                 </p>
                 <p className="text-sm text-ink mt-2">{c.detail}</p>
                 {(c.status === "Open" || c.status === "Investigating") && (
@@ -47,7 +47,7 @@ export default async function AdminClaimsPage() {
           </Card>
         ))}
         {claims.length === 0 && (
-          <Card className="p-8 text-center text-sm text-muted">No claims. 🎉</Card>
+          <Card className="p-8 text-center text-sm text-muted">Aucune réclamation. 🎉</Card>
         )}
       </div>
     </div>

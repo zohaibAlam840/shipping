@@ -35,20 +35,20 @@ export const WEIGHT_BANDS: WeightBand[] = [
   "15-25kg",
 ];
 
+// Launch route: France → Sénégal only (Sénégal → France is a future phase).
+export const ORIGIN: Country = "France";
+export const DESTINATION: Country = "Senegal";
+
 // Static copy of the pricing_rules table so public pages (landing,
 // calculator) can quote instantly without a round-trip. The server
 // recomputes the real price from the DB when an order is created.
+// Official YonelMa pricing grid (France → Sénégal).
 export const PRICING_RULES: PricingRule[] = [
-  { origin: "France", destination: "Senegal", band: "0-1kg", basePrice: 15, transitDays: "5–7 days" },
-  { origin: "France", destination: "Senegal", band: "1-3kg", basePrice: 25, transitDays: "5–7 days" },
-  { origin: "France", destination: "Senegal", band: "3-7kg", basePrice: 45, transitDays: "6–8 days" },
-  { origin: "France", destination: "Senegal", band: "7-15kg", basePrice: 79, transitDays: "7–10 days" },
-  { origin: "France", destination: "Senegal", band: "15-25kg", basePrice: 119, transitDays: "7–10 days" },
-  { origin: "Senegal", destination: "France", band: "0-1kg", basePrice: 18, transitDays: "6–8 days" },
-  { origin: "Senegal", destination: "France", band: "1-3kg", basePrice: 29, transitDays: "6–8 days" },
-  { origin: "Senegal", destination: "France", band: "3-7kg", basePrice: 52, transitDays: "7–9 days" },
-  { origin: "Senegal", destination: "France", band: "7-15kg", basePrice: 89, transitDays: "8–11 days" },
-  { origin: "Senegal", destination: "France", band: "15-25kg", basePrice: 135, transitDays: "8–11 days" },
+  { origin: "France", destination: "Senegal", band: "0-1kg", basePrice: 19, transitDays: "5–7 jours" },
+  { origin: "France", destination: "Senegal", band: "1-3kg", basePrice: 39, transitDays: "5–7 jours" },
+  { origin: "France", destination: "Senegal", band: "3-7kg", basePrice: 64, transitDays: "6–8 jours" },
+  { origin: "France", destination: "Senegal", band: "7-15kg", basePrice: 109, transitDays: "7–10 jours" },
+  { origin: "France", destination: "Senegal", band: "15-25kg", basePrice: 169, transitDays: "7–10 jours" },
 ];
 
 export const HOME_COLLECTION_FEE = 18;
@@ -131,14 +131,62 @@ export function statusIndex(s: OrderStatus) {
   return STATUSES.indexOf(s);
 }
 
+// ---- French display labels ----
+// Status / payment / delivery / claim values stay canonical (English) in the
+// database; these maps translate them for display only, so no data migration
+// is needed and the timeline/styling logic keeps working.
+export const STATUS_FR: Record<OrderStatus | "Incident reported", string> = {
+  "Pending Confirmation": "En attente de confirmation",
+  "Parcel Received": "Colis reçu",
+  Processing: "En traitement",
+  "Shipped from France": "Expédié de France",
+  "In Transit": "En transit",
+  "Arrived in Senegal": "Arrivé au Sénégal",
+  "Out for Delivery": "En cours de livraison",
+  Delivered: "Livré",
+  "Incident reported": "Incident signalé",
+};
+
+export const PAYMENT_FR: Record<PaymentStatus, string> = {
+  Unpaid: "Non payé",
+  Paid: "Payé",
+  Refunded: "Remboursé",
+};
+
+export const DELIVERY_FR: Record<DeliveryOption, string> = {
+  "Relay point": "Point relais",
+  "Post office": "Bureau de poste",
+  "Home collection": "Enlèvement à domicile",
+};
+
+export const CLAIM_TYPE_FR: Record<string, string> = {
+  Damaged: "Endommagé",
+  Lost: "Perdu",
+  "Delivery issue": "Problème de livraison",
+  "Refund request": "Demande de remboursement",
+};
+
+export const CLAIM_STATUS_FR: Record<string, string> = {
+  Open: "Ouvert",
+  Investigating: "En cours d'examen",
+  Resolved: "Résolu",
+  Refunded: "Remboursé",
+};
+
+// Country display in French.
+export const COUNTRY_FR: Record<Country, string> = {
+  France: "France",
+  Senegal: "Sénégal",
+};
+
 export const eur = (n: number) =>
-  new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(n);
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 
 export const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 
 export const fmtDateTime = (iso: string) =>
-  new Date(iso).toLocaleString("en-GB", {
+  new Date(iso).toLocaleString("fr-FR", {
     day: "numeric",
     month: "short",
     hour: "2-digit",

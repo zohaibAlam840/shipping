@@ -4,14 +4,14 @@
 // Pure frontend for now; "confirm" fakes an order number.
 import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
-import { quote, eur, type DeliveryOption } from "@/lib/data";
+import { quote, eur, COUNTRY_FR, DELIVERY_FR, type DeliveryOption } from "@/lib/data";
 import { createOrder } from "@/app/actions";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { Calculator, DEFAULT_CALC, type CalcState } from "@/components/calculator";
 import { Card, PageTitle, Field, inputCls } from "@/components/ui";
 import { ArrowRightIcon, CheckIcon, PinIcon, TruckIcon, HomeIcon } from "@/components/icons";
 
-const STEPS = ["Quote", "Details", "Drop-off", "Review"] as const;
+const STEPS = ["Devis", "Détails", "Dépôt", "Récapitulatif"] as const;
 
 interface BookingState {
   calc: CalcState;
@@ -21,9 +21,9 @@ interface BookingState {
 }
 
 const DELIVERY_OPTIONS: { value: DeliveryOption; icon: typeof PinIcon; text: string; fee: string }[] = [
-  { value: "Relay point", icon: PinIcon, text: "Drop at a partner shop near you", fee: "Free" },
-  { value: "Post office", icon: TruckIcon, text: "Drop at a partner post office", fee: "Free" },
-  { value: "Home collection", icon: HomeIcon, text: "We collect from your address", fee: "+€18" },
+  { value: "Relay point", icon: PinIcon, text: "Déposez dans un commerce partenaire près de chez vous", fee: "Gratuit" },
+  { value: "Post office", icon: TruckIcon, text: "Déposez dans un bureau de poste partenaire", fee: "Gratuit" },
+  { value: "Home collection", icon: HomeIcon, text: "Nous récupérons le colis chez vous", fee: "+18 €" },
 ];
 
 export default function BookPage() {
@@ -31,7 +31,7 @@ export default function BookPage() {
   const [done, setDone] = useState<{ orderNumber: string; trackingNumber: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [sender, setSender] = useState({ name: "You", phone: "" });
+  const [sender, setSender] = useState({ name: "Vous", phone: "" });
   const [b, setB] = useState<BookingState>({
     calc: DEFAULT_CALC,
     recipient: { name: "", phone: "", address: "" },
@@ -47,7 +47,7 @@ export default function BookPage() {
         if (u) {
           const m = u.user_metadata ?? {};
           setSender({
-            name: (m.full_name as string) || u.email?.split("@")[0] || "You",
+            name: (m.full_name as string) || u.email?.split("@")[0] || "Vous",
             phone: (m.phone as string) || "",
           });
         }
@@ -76,7 +76,7 @@ export default function BookPage() {
           dimensions: b.parcel.dimensions,
         },
       });
-      if ("error" in res) setError(res.error ?? "Something went wrong.");
+      if ("error" in res) setError(res.error ?? "Une erreur est survenue.");
       else setDone({ orderNumber: res.orderNumber, trackingNumber: res.trackingNumber });
     });
   }
@@ -87,30 +87,30 @@ export default function BookPage() {
         <span className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-brand text-white">
           <CheckIcon width={32} height={32} strokeWidth={2.4} />
         </span>
-        <h1 className="text-2xl font-bold text-ink">Booking confirmed!</h1>
+        <h1 className="text-2xl font-bold text-ink">Réservation confirmée !</h1>
         <p className="text-muted mt-2">
-          Your order <span className="font-bold text-ink">{done.orderNumber}</span> is registered.
+          Votre commande <span className="font-bold text-ink">{done.orderNumber}</span> est enregistrée.
           {b.delivery === "Home collection"
-            ? " We'll contact you to schedule the pickup."
-            : " Drop your parcel at the chosen point to get it moving."}
+            ? " Nous vous contacterons pour planifier l'enlèvement."
+            : " Déposez votre colis au point choisi pour le mettre en route."}
         </p>
         <Card className="mt-6 p-5 text-left">
-          <p className="text-sm text-muted">Total to pay at drop-off</p>
+          <p className="text-sm text-muted">Total à payer au dépôt</p>
           <p className="text-3xl font-bold text-brand">{q ? eur(q.total) : "—"}</p>
           <p className="text-xs text-muted mt-1">
-            {b.calc.origin} → {b.calc.destination} · {b.calc.band} · {b.delivery}
+            {COUNTRY_FR[b.calc.origin]} → {COUNTRY_FR[b.calc.destination]} · {b.calc.band} · {DELIVERY_FR[b.delivery]}
           </p>
           <p className="text-xs text-muted mt-1">
-            Tracking number{" "}
+            Numéro de suivi{" "}
             <span className="font-mono font-bold text-ink">{done.trackingNumber}</span>
           </p>
         </Card>
         <div className="mt-6 flex flex-col gap-2">
           <Link href="/shipments" className="h-12 rounded-full bg-brand text-white font-semibold flex items-center justify-center hover:bg-brand-dark transition">
-            View my shipments
+            Voir mes envois
           </Link>
           <Link href="/dashboard" className="h-12 rounded-full border border-line bg-card font-semibold text-ink flex items-center justify-center hover:border-brand/40 transition">
-            Back to home
+            Retour à l'accueil
           </Link>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function BookPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <PageTitle title="Ship a parcel" subtitle={`Step ${step + 1} of ${STEPS.length} — ${STEPS[step]}`} />
+      <PageTitle title="Envoyer un colis" subtitle={`Étape ${step + 1} sur ${STEPS.length} — ${STEPS[step]}`} />
 
       {/* Step indicator */}
       <div className="app-chrome flex gap-1.5 mb-5">
@@ -139,9 +139,9 @@ export default function BookPage() {
         {step === 1 && (
           <div className="space-y-5">
             <div>
-              <h2 className="font-bold text-ink mb-3">Recipient</h2>
+              <h2 className="font-bold text-ink mb-3">Destinataire</h2>
               <div className="space-y-3">
-                <Field label="Full name">
+                <Field label="Nom complet">
                   <input
                     className={inputCls}
                     placeholder="Moussa Ndiaye"
@@ -149,19 +149,19 @@ export default function BookPage() {
                     onChange={(e) => setB({ ...b, recipient: { ...b.recipient, name: e.target.value } })}
                   />
                 </Field>
-                <Field label="Phone (WhatsApp)">
+                <Field label="Téléphone (WhatsApp)">
                   <input
                     type="tel"
                     className={inputCls}
-                    placeholder={b.calc.destination === "Senegal" ? "+221 77 ..." : "+33 6 ..."}
+                    placeholder="+221 77 ..."
                     value={b.recipient.phone}
                     onChange={(e) => setB({ ...b, recipient: { ...b.recipient, phone: e.target.value } })}
                   />
                 </Field>
-                <Field label={`Delivery address in ${b.calc.destination}`}>
+                <Field label={`Adresse de livraison au ${COUNTRY_FR[b.calc.destination]}`}>
                   <input
                     className={inputCls}
-                    placeholder="Street, neighbourhood, city"
+                    placeholder="Rue, quartier, ville"
                     value={b.recipient.address}
                     onChange={(e) => setB({ ...b, recipient: { ...b.recipient, address: e.target.value } })}
                   />
@@ -169,9 +169,9 @@ export default function BookPage() {
               </div>
             </div>
             <div>
-              <h2 className="font-bold text-ink mb-3">Parcel</h2>
+              <h2 className="font-bold text-ink mb-3">Colis</h2>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Weight (kg)">
+                <Field label="Poids (kg)">
                   <input
                     type="number"
                     className={inputCls}
@@ -190,15 +190,15 @@ export default function BookPage() {
                 </Field>
               </div>
               <div className="mt-3 space-y-3">
-                <Field label="What's inside?">
+                <Field label="Que contient le colis ?">
                   <input
                     className={inputCls}
-                    placeholder="Clothes, food, documents…"
+                    placeholder="Vêtements, nourriture, documents…"
                     value={b.parcel.description}
                     onChange={(e) => setB({ ...b, parcel: { ...b.parcel, description: e.target.value } })}
                   />
                 </Field>
-                <Field label="Declared value (€)" hint="Used for insurance and customs.">
+                <Field label="Valeur déclarée (€)" hint="Utilisée pour l'assurance et la douane.">
                   <input
                     type="number"
                     className={inputCls}
@@ -214,7 +214,7 @@ export default function BookPage() {
 
         {step === 2 && (
           <div className="space-y-3">
-            <h2 className="font-bold text-ink">How does the parcel reach us?</h2>
+            <h2 className="font-bold text-ink">Comment le colis nous parvient-il ?</h2>
             {DELIVERY_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -228,10 +228,10 @@ export default function BookPage() {
                   <opt.icon width={22} height={22} />
                 </span>
                 <span className="flex-1">
-                  <span className="block font-semibold text-ink text-sm">{opt.value}</span>
+                  <span className="block font-semibold text-ink text-sm">{DELIVERY_FR[opt.value]}</span>
                   <span className="block text-xs text-muted mt-0.5">{opt.text}</span>
                 </span>
-                <span className={`text-sm font-bold ${opt.fee === "Free" ? "text-brand" : "text-ink"}`}>{opt.fee}</span>
+                <span className={`text-sm font-bold ${opt.fee === "Gratuit" ? "text-brand" : "text-ink"}`}>{opt.fee}</span>
               </button>
             ))}
           </div>
@@ -239,17 +239,17 @@ export default function BookPage() {
 
         {step === 3 && q && (
           <div className="space-y-4">
-            <h2 className="font-bold text-ink">Review your booking</h2>
+            <h2 className="font-bold text-ink">Vérifiez votre réservation</h2>
             <dl className="space-y-2.5 text-sm">
               {[
-                ["Route", `${b.calc.origin} → ${b.calc.destination}`],
-                ["Weight band", b.calc.band],
-                ["Sender", `${sender.name}${sender.phone ? ` · ${sender.phone}` : ""}`],
-                ["Recipient", `${b.recipient.name} · ${b.recipient.phone}`],
-                ["Deliver to", b.recipient.address],
-                ["Contents", b.parcel.description],
-                ["Drop-off", b.delivery],
-                ["Insurance", b.calc.insurance ? `Yes (value ${eur(Number(b.parcel.declaredValue) || b.calc.declaredValue)})` : "No"],
+                ["Trajet", `${COUNTRY_FR[b.calc.origin]} → ${COUNTRY_FR[b.calc.destination]}`],
+                ["Tranche de poids", b.calc.band],
+                ["Expéditeur", `${sender.name}${sender.phone ? ` · ${sender.phone}` : ""}`],
+                ["Destinataire", `${b.recipient.name} · ${b.recipient.phone}`],
+                ["Livrer à", b.recipient.address],
+                ["Contenu", b.parcel.description],
+                ["Dépôt", DELIVERY_FR[b.delivery]],
+                ["Assurance", b.calc.insurance ? `Oui (valeur ${eur(Number(b.parcel.declaredValue) || b.calc.declaredValue)})` : "Non"],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4">
                   <dt className="text-muted shrink-0">{k}</dt>
@@ -260,7 +260,7 @@ export default function BookPage() {
             <div className="rounded-xl bg-brand-light/60 border border-brand/25 p-4 flex items-end justify-between">
               <div className="text-sm text-muted">
                 <p>Base {eur(q.basePrice)}{q.optionsFee > 0 && <> + options {eur(q.optionsFee)}</>}</p>
-                <p className="text-xs mt-0.5">Estimated {q.transitDays}</p>
+                <p className="text-xs mt-0.5">Estimé {q.transitDays}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs font-semibold text-muted uppercase">Total</p>
@@ -268,7 +268,7 @@ export default function BookPage() {
               </div>
             </div>
             <p className="text-xs text-muted">
-              Pay at drop-off or collection. Online card payment is coming soon.
+              Payez au dépôt ou à l'enlèvement. Le paiement par carte en ligne arrive bientôt.
             </p>
           </div>
         )}
@@ -281,7 +281,7 @@ export default function BookPage() {
             onClick={() => setStep(step - 1)}
             className="h-12 flex-1 rounded-full border border-line bg-card font-semibold text-ink hover:border-brand/40 active:scale-[0.98] transition"
           >
-            Back
+            Retour
           </button>
         )}
         {step < STEPS.length - 1 ? (
@@ -291,7 +291,7 @@ export default function BookPage() {
             onClick={() => setStep(step + 1)}
             className="h-12 flex-1 rounded-full bg-brand font-semibold text-white hover:bg-brand-dark active:scale-[0.98] transition disabled:opacity-40 disabled:pointer-events-none inline-flex items-center justify-center gap-2"
           >
-            Continue <ArrowRightIcon width={18} height={18} />
+            Continuer <ArrowRightIcon width={18} height={18} />
           </button>
         ) : (
           <button
@@ -300,7 +300,7 @@ export default function BookPage() {
             disabled={pending}
             className="h-12 flex-1 rounded-full bg-brand font-semibold text-white hover:bg-brand-dark active:scale-[0.98] transition inline-flex items-center justify-center gap-2 disabled:opacity-60"
           >
-            {pending ? "Booking…" : "Confirm booking"} <CheckIcon width={18} height={18} />
+            {pending ? "Réservation…" : "Confirmer la réservation"} <CheckIcon width={18} height={18} />
           </button>
         )}
       </div>

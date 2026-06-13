@@ -22,14 +22,14 @@ export function ClaimActions({ claimId }: { claimId: number }) {
         onClick={() => act("Resolved")}
         className="h-9 rounded-full bg-brand px-4 text-xs font-semibold text-white hover:bg-brand-dark transition disabled:opacity-60"
       >
-        Mark resolved
+        Marquer résolu
       </button>
       <button
         disabled={pending}
         onClick={() => act("Refunded")}
         className="h-9 rounded-full border border-line px-4 text-xs font-semibold text-ink hover:border-brand/40 transition disabled:opacity-60"
       >
-        Issue refund
+        Rembourser
       </button>
     </div>
   );

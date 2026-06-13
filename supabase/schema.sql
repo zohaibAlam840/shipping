@@ -71,17 +71,13 @@ alter table status_log enable row level security;
 alter table claims enable row level security;
 
 -- ---------- Seed: pricing rules ----------
+-- Official YonelMa pricing grid (France → Sénégal only at launch).
 insert into pricing_rules (origin, destination, band, base_price, transit_days) values
-('France','Senegal','0-1kg',15,'5–7 days'),
-('France','Senegal','1-3kg',25,'5–7 days'),
-('France','Senegal','3-7kg',45,'6–8 days'),
-('France','Senegal','7-15kg',79,'7–10 days'),
-('France','Senegal','15-25kg',119,'7–10 days'),
-('Senegal','France','0-1kg',18,'6–8 days'),
-('Senegal','France','1-3kg',29,'6–8 days'),
-('Senegal','France','3-7kg',52,'7–9 days'),
-('Senegal','France','7-15kg',89,'8–11 days'),
-('Senegal','France','15-25kg',135,'8–11 days');
+('France','Senegal','0-1kg',19,'5–7 jours'),
+('France','Senegal','1-3kg',39,'5–7 jours'),
+('France','Senegal','3-7kg',64,'6–8 jours'),
+('France','Senegal','7-15kg',109,'7–10 jours'),
+('France','Senegal','15-25kg',169,'7–10 jours');
 
 -- ---------- Seed: demo orders ----------
 insert into orders (id, order_number, tracking_number, customer_name, customer_email, origin, destination, band, delivery, insurance, recipient_name, recipient_phone, recipient_address, parcel_weight, parcel_description, parcel_declared_value, parcel_dimensions, total, status, payment, incident, partner, created_at) values

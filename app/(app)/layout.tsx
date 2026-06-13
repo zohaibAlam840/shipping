@@ -4,10 +4,10 @@ import { AppShell } from "@/components/app-shell";
 import { HomeIcon, PlusIcon, BoxIcon, UserIcon } from "@/components/icons";
 
 const NAV = [
-  { href: "/dashboard", label: "Home", icon: HomeIcon },
-  { href: "/book", label: "Ship", icon: PlusIcon },
-  { href: "/shipments", label: "Shipments", icon: BoxIcon },
-  { href: "/profile", label: "Profile", icon: UserIcon },
+  { href: "/dashboard", label: "Accueil", icon: HomeIcon },
+  { href: "/book", label: "Envoyer", icon: PlusIcon },
+  { href: "/shipments", label: "Envois", icon: BoxIcon },
+  { href: "/profile", label: "Profil", icon: UserIcon },
 ];
 
 export default function CustomerLayout({

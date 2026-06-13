@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "YonelMa — France ↔ Senegal Shipping",
+    name: "YonelMa — Envoi de colis France → Sénégal",
     short_name: "YonelMa",
     description:
-      "Send parcels between France and Senegal with transparent pricing and real-time tracking.",
+      "Envoyez vos colis de la France vers le Sénégal avec des prix transparents et un suivi en temps réel.",
     start_url: "/",
     display: "standalone",
     orientation: "portrait",

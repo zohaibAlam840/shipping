@@ -76,7 +76,7 @@ export function AppShell({
               className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50/50 hover:text-red-700 transition cursor-pointer border-0 bg-transparent text-left font-semibold"
             >
               <LogoutIcon width={20} height={20} />
-              Log out
+              Se déconnecter
             </button>
           )}
           <Link
@@ -84,7 +84,7 @@ export function AppShell({
             className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-muted hover:text-ink hover:bg-background transition"
           >
             <LogoutIcon width={20} height={20} />
-            Exit to site
+            Retour au site
           </Link>
         </div>
       </aside>
@@ -105,7 +105,7 @@ export function AppShell({
                 onClick={handleLogout}
                 className="ml-2 rounded-full border border-red-200 bg-red-50 text-red-700 text-[11px] font-bold px-2 py-0.5 uppercase hover:bg-red-100 cursor-pointer"
               >
-                Log out
+                Déconnexion
               </button>
             )}
           </div>

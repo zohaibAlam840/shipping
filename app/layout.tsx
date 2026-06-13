@@ -20,11 +20,11 @@ const sora = Sora({
 
 export const metadata: Metadata = {
   title: {
-    default: "YonelMa — France ↔ Senegal Shipping",
+    default: "YonelMa — Envoi de colis France → Sénégal",
     template: "%s · YonelMa",
   },
   description:
-    "Send parcels between France and Senegal with transparent pricing, door-to-door options and real-time tracking.",
+    "Envoyez vos colis de la France vers le Sénégal avec des prix transparents, le porte-à-porte et un suivi en temps réel.",
   applicationName: "YonelMa",
   appleWebApp: {
     capable: true,
@@ -49,7 +49,8 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="fr"
+      data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} ${sora.variable} h-full antialiased`}
     >
       <body className="min-h-dvh flex flex-col">{children}</body>

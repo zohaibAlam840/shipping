@@ -14,40 +14,40 @@ import {
 } from "@/components/icons";
 
 const STEPS = [
-  { icon: BoxIcon, title: "Get a price", text: "Pick origin, destination and weight — see your price and delivery time instantly." },
-  { icon: ClipboardIcon, title: "Book online", text: "Add the recipient and parcel details in two minutes, from your phone." },
-  { icon: TruckIcon, title: "Drop off or pickup", text: "Bring it to a relay point or have us collect it from your door." },
-  { icon: PlaneIcon, title: "Track to the door", text: "Follow every step from Paris to Dakar until it's delivered." },
+  { icon: BoxIcon, title: "Obtenez un prix", text: "Choisissez le poids — le prix et le délai de livraison s'affichent instantanément." },
+  { icon: ClipboardIcon, title: "Réservez en ligne", text: "Ajoutez le destinataire et les détails du colis en deux minutes, depuis votre téléphone." },
+  { icon: TruckIcon, title: "Dépôt ou enlèvement", text: "Déposez-le dans un point relais ou faites-le récupérer chez vous." },
+  { icon: PlaneIcon, title: "Suivi jusqu'à la porte", text: "Suivez chaque étape de Paris à Dakar jusqu'à la livraison." },
 ];
 
 const FAQS = [
   {
-    q: "How long does delivery take?",
-    a: "Most parcels arrive in 5–10 days depending on weight and destination city. You see the estimate before you pay.",
+    q: "Combien de temps prend la livraison ?",
+    a: "La plupart des colis arrivent en 5 à 10 jours selon le poids et la ville de destination. Vous voyez l'estimation avant de payer.",
   },
   {
-    q: "What can I send?",
-    a: "Clothes, food (non-perishable), electronics, documents, medication and more. Prohibited items follow French and Senegalese customs rules.",
+    q: "Que puis-je envoyer ?",
+    a: "Vêtements, nourriture (non périssable), électronique, documents, médicaments et plus encore. Les articles interdits suivent les règles douanières françaises et sénégalaises.",
   },
   {
-    q: "Is my parcel insured?",
-    a: "Optional insurance covers your declared value for 4% of its value. Every parcel is tracked regardless.",
+    q: "Mon colis est-il assuré ?",
+    a: "L'assurance optionnelle couvre votre valeur déclarée pour 4 % de sa valeur. Chaque colis est suivi dans tous les cas.",
   },
   {
-    q: "How do I pay?",
-    a: "Book online and pay on drop-off or collection. Card payment online is coming soon.",
+    q: "Comment puis-je payer ?",
+    a: "Réservez en ligne et payez au dépôt ou à l'enlèvement. Le paiement par carte en ligne arrive bientôt.",
   },
 ];
 
 const REVIEWS = [
-  { name: "Aminata D.", city: "Paris", text: "Sent a 5kg parcel to my mum in Dakar — arrived in 6 days, she got a WhatsApp at every step. Best service I've used." },
-  { name: "Ousmane F.", city: "Marseille", text: "The price calculator is honest, no surprise fees at drop-off. Tracking actually works." },
-  { name: "Khady S.", city: "Dakar", text: "Sent fabrics to my sister in Lyon. Home collection in Dakar made everything easy." },
+  { name: "Aminata D.", city: "Paris", text: "J'ai envoyé un colis de 5 kg à ma mère à Dakar — arrivé en 6 jours, elle a reçu un WhatsApp à chaque étape. Le meilleur service que j'aie utilisé." },
+  { name: "Ousmane F.", city: "Marseille", text: "Le calculateur de prix est honnête, aucun frais surprise au dépôt. Le suivi fonctionne vraiment." },
+  { name: "Khady S.", city: "Dakar", text: "J'ai envoyé des tissus à ma sœur. L'enlèvement à domicile a tout simplifié." },
 ];
 
 function Stars() {
   return (
-    <div className="flex gap-0.5 text-accent" aria-label="5 stars">
+    <div className="flex gap-0.5 text-accent" aria-label="5 étoiles">
       {Array.from({ length: 5 }).map((_, i) => (
         <svg key={i} width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2.5 14.9 9l7.1.6-5.4 4.7 1.6 7-6.2-3.7L5.8 21l1.6-7L2 9.6 9.1 9z" />
@@ -60,10 +60,10 @@ function Stars() {
 /** Mini tracking card shown floating in the hero. */
 function HeroTrackingCard() {
   const steps = [
-    { label: "Parcel received · Paris hub", done: true },
-    { label: "Shipped from France", done: true },
-    { label: "In transit · CDG → DSS", done: true, active: true },
-    { label: "Out for delivery · Dakar", done: false },
+    { label: "Colis reçu · hub Paris", done: true },
+    { label: "Expédié de France", done: true },
+    { label: "En transit · CDG → DSS", done: true, active: true },
+    { label: "En cours de livraison · Dakar", done: false },
   ];
   return (
     <div className="anim-float w-[330px] rounded-3xl bg-white p-5 shadow-lift">
@@ -78,7 +78,7 @@ function HeroTrackingCard() {
           </div>
         </div>
         <span className="rounded-full bg-indigo-50 border border-indigo-200 px-2.5 py-1 text-[10px] font-bold text-indigo-700">
-          IN TRANSIT
+          EN TRANSIT
         </span>
       </div>
       <ol>
@@ -101,8 +101,8 @@ function HeroTrackingCard() {
         ))}
       </ol>
       <div className="mt-4 flex items-center justify-between rounded-2xl bg-background px-4 py-3">
-        <span className="text-[11px] font-semibold text-muted">Estimated arrival</span>
-        <span className="text-[13px] font-bold text-brand">2 days</span>
+        <span className="text-[11px] font-semibold text-muted">Arrivée estimée</span>
+        <span className="text-[13px] font-bold text-brand">2 jours</span>
       </div>
     </div>
   );
@@ -129,34 +129,34 @@ export default function HomePage() {
           <div>
             <p className="anim-fade-up inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/15 px-4 py-1.5 text-[11px] font-bold tracking-[0.14em] uppercase backdrop-blur">
               <PlaneIcon width={14} height={14} className="text-accent" />
-              France ↔ Senegal · door to door
+              France → Sénégal · porte à porte
             </p>
             <h1 className="anim-fade-up anim-d1 mt-6 max-w-2xl text-4xl font-extrabold leading-[1.08] sm:text-6xl">
-              Send parcels home,
+              Envoyez vos colis,
               <br />
-              from <span className="bg-gradient-to-r from-accent to-amber-300 bg-clip-text text-transparent">€15</span>
-              <span className="text-white/90"> — tracked</span>
+              dès <span className="bg-gradient-to-r from-accent to-amber-300 bg-clip-text text-transparent">19 €</span>
+              <span className="text-white/90"> — suivis</span>
               <br />
-              all the way.
+              jusqu'au bout.
             </h1>
             <p className="anim-fade-up anim-d2 mt-5 max-w-lg text-base text-white/75 sm:text-lg">
-              Honest prices, pickup from your door, and a live timeline for
-              every parcel until it reaches your family's hands.
+              Des prix honnêtes, l'enlèvement à votre porte, et un suivi en
+              temps réel pour chaque colis jusqu'aux mains de votre famille.
             </p>
             <div className="anim-fade-up anim-d3 mt-9 flex flex-col gap-3 sm:flex-row">
               <PrimaryLink href="/book" className="!bg-accent !text-[#06301f] !h-[54px] !px-8 shadow-lift hover:!bg-amber-400">
-                Ship a parcel <ArrowRightIcon width={18} height={18} />
+                Envoyer un colis <ArrowRightIcon width={18} height={18} />
               </PrimaryLink>
               <GhostLink href="/track" className="!h-[54px] !px-8 !bg-white/10 !text-white !border-white/20 backdrop-blur hover:!text-white hover:!border-white/50">
-                Track a parcel
+                Suivre un colis
               </GhostLink>
             </div>
 
             <dl className="anim-fade-up anim-d4 mt-12 flex max-w-md items-center justify-between gap-4 border-t border-white/15 pt-6">
               {[
-                ["5–10", "days delivery"],
-                ["€15", "starting price"],
-                ["100%", "parcels tracked"],
+                ["5–10", "jours de livraison"],
+                ["19 €", "prix de départ"],
+                ["100 %", "colis suivis"],
               ].map(([v, l], i) => (
                 <div key={l} className={i > 0 ? "border-l border-white/15 pl-4" : ""}>
                   <dt className="sr-only">{l}</dt>
@@ -176,9 +176,9 @@ export default function HomePage() {
       {/* ============ How it works ============ */}
       <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
         <div className="mx-auto max-w-xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">How it works</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Comment ça marche</p>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-            From your hands to theirs, in four steps
+            De vos mains aux leurs, en quatre étapes
           </h2>
         </div>
         <div className="relative mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -208,12 +208,12 @@ export default function HomePage() {
       <section className="border-y border-line bg-card">
         <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="mx-auto max-w-xl text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Pricing</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Tarifs</p>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              No hidden fees. Ever.
+              Aucun frais caché. Jamais.
             </h2>
             <p className="mt-3 text-muted">
-              France → Senegal — what you see is what you pay at drop-off.
+              France → Sénégal — ce que vous voyez est ce que vous payez au dépôt.
             </p>
           </div>
           <div className="mx-auto mt-12 grid max-w-4xl gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -230,7 +230,7 @@ export default function HomePage() {
                   >
                     {popular && (
                       <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#06301f]">
-                        Popular
+                        Populaire
                       </span>
                     )}
                     <div className={`text-xs font-bold uppercase tracking-wide ${popular ? "text-white/75" : "text-muted"}`}>
@@ -249,7 +249,7 @@ export default function HomePage() {
           </div>
           <div className="mt-10 text-center">
             <PrimaryLink href="/calculator" className="!h-[54px] !px-8 shadow-soft">
-              Get an exact quote <ArrowRightIcon width={18} height={18} />
+              Obtenir un devis précis <ArrowRightIcon width={18} height={18} />
             </PrimaryLink>
           </div>
         </div>
@@ -258,16 +258,16 @@ export default function HomePage() {
       {/* ============ Why YonelMa ============ */}
       <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
         <div className="mx-auto max-w-xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Why YonelMa</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Pourquoi YonelMa</p>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-            Built for families, not freight
+            Pensé pour les familles, pas pour le fret
           </h2>
         </div>
         <div className="mt-12 grid gap-4 sm:grid-cols-3">
           {[
-            { icon: ShieldIcon, title: "Insured & secure", text: "Optional insurance on declared value and careful handling at both hubs." },
-            { icon: PinIcon, title: "Door to door", text: "Home collection in France, home delivery or relay pickup in Senegal." },
-            { icon: ClockIcon, title: "Live tracking", text: "A real timeline for every parcel — from drop-off to your family's hands." },
+            { icon: ShieldIcon, title: "Assuré et sécurisé", text: "Assurance optionnelle sur la valeur déclarée et manipulation soignée dans les deux hubs." },
+            { icon: PinIcon, title: "Porte à porte", text: "Enlèvement à domicile en France, livraison à domicile ou en point relais au Sénégal." },
+            { icon: ClockIcon, title: "Suivi en temps réel", text: "Un vrai suivi pour chaque colis — du dépôt aux mains de votre famille." },
           ].map((f) => (
             <div
               key={f.title}
@@ -287,9 +287,9 @@ export default function HomePage() {
       <section className="border-y border-line bg-card">
         <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="mx-auto max-w-xl text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Reviews</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Avis</p>
             <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              Loved on both sides of the journey
+              Apprécié des deux côtés du voyage
             </h2>
           </div>
           <div className="mt-12 grid gap-4 sm:grid-cols-3">
@@ -322,7 +322,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-xl text-center">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">FAQ</p>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-            Questions, answered
+            Vos questions, nos réponses
           </h2>
         </div>
         <div className="mt-10 space-y-3">
@@ -349,18 +349,18 @@ export default function HomePage() {
           </div>
           <div className="relative">
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Ready to send something home?
+              Prêt à envoyer un colis ?
             </h2>
             <p className="mx-auto mt-3 max-w-md text-white/75">
-              Get a price in seconds — book in two minutes.
+              Obtenez un prix en quelques secondes — réservez en deux minutes.
             </p>
             <div className="mt-8 flex justify-center">
               <PrimaryLink href="/book" className="!bg-accent !text-[#06301f] !h-[54px] !px-8 shadow-lift hover:!bg-amber-400">
-                Ship a parcel now <ArrowRightIcon width={18} height={18} />
+                Envoyer un colis maintenant <ArrowRightIcon width={18} height={18} />
               </PrimaryLink>
             </div>
             <ul className="mt-7 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-medium text-white/65">
-              {["No account needed to get a quote", "Free cancellation before drop-off", "Support in FR / WO / EN"].map((t) => (
+              {["Aucun compte requis pour un devis", "Annulation gratuite avant le dépôt", "Support en FR / WO / EN"].map((t) => (
                 <li key={t} className="inline-flex items-center gap-1.5">
                   <CheckIcon width={13} height={13} className="text-accent" /> {t}
                 </li>

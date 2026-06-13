@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { STATUSES, eur, fmtDate, type Order, type OrderStatus } from "@/lib/data";
+import { STATUSES, eur, fmtDate, STATUS_FR, COUNTRY_FR, type Order, type OrderStatus } from "@/lib/data";
 import { Card, StatusBadge, PaymentBadge, inputCls } from "@/components/ui";
 import { ChevronRightIcon, SearchIcon } from "@/components/icons";
 
@@ -28,7 +28,7 @@ export function OrdersExplorer({ orders }: { orders: Order[] }) {
           <SearchIcon width={18} height={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
           <input
             className={`${inputCls} pl-10`}
-            placeholder="Search order, tracking, customer…"
+            placeholder="Rechercher commande, suivi, client…"
             value={qStr}
             onChange={(e) => setQStr(e.target.value)}
           />
@@ -38,9 +38,9 @@ export function OrdersExplorer({ orders }: { orders: Order[] }) {
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as OrderStatus | "All")}
         >
-          <option>All</option>
+          <option value="All">Tous les statuts</option>
           {STATUSES.map((s) => (
-            <option key={s}>{s}</option>
+            <option key={s} value={s}>{STATUS_FR[s]}</option>
           ))}
         </select>
       </div>
@@ -58,7 +58,7 @@ export function OrdersExplorer({ orders }: { orders: Order[] }) {
                     <p className="font-bold text-ink text-sm shrink-0">{eur(o.total)}</p>
                   </div>
                   <p className="text-xs text-muted mt-0.5">
-                    {o.origin} → {o.destination} · {o.band} · {fmtDate(o.date)}
+                    {COUNTRY_FR[o.origin]} → {COUNTRY_FR[o.destination]} · {o.band} · {fmtDate(o.date)}
                     {o.partner && <> · {o.partner}</>}
                   </p>
                   <div className="mt-1.5 flex gap-1.5 flex-wrap">
@@ -72,7 +72,7 @@ export function OrdersExplorer({ orders }: { orders: Order[] }) {
           </Link>
         ))}
         {filtered.length === 0 && (
-          <Card className="p-8 text-center text-sm text-muted">No orders match your filters.</Card>
+          <Card className="p-8 text-center text-sm text-muted">Aucune commande ne correspond à vos filtres.</Card>
         )}
       </div>
     </div>

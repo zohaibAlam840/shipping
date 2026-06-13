@@ -6,6 +6,8 @@ import { updateOrderAdmin } from "@/app/actions";
 import {
   STATUSES,
   PARTNERS,
+  STATUS_FR,
+  PAYMENT_FR,
   type Order,
   type OrderStatus,
   type PaymentStatus,
@@ -32,7 +34,7 @@ export function ManageOrderForm({ order }: { order: Order }) {
       });
       if (res.error) setMsg(res.error);
       else {
-        setMsg("Saved ✓");
+        setMsg("Enregistré ✓");
         setNote("");
         router.refresh();
       }
@@ -41,32 +43,32 @@ export function ManageOrderForm({ order }: { order: Order }) {
 
   return (
     <div className="space-y-3.5">
-      <Field label="Status">
+      <Field label="Statut">
         <select className={inputCls} value={status} onChange={(e) => setStatus(e.target.value as OrderStatus)}>
           {STATUSES.map((s) => (
-            <option key={s}>{s}</option>
+            <option key={s} value={s}>{STATUS_FR[s]}</option>
           ))}
         </select>
       </Field>
-      <Field label="Payment">
+      <Field label="Paiement">
         <select className={inputCls} value={payment} onChange={(e) => setPayment(e.target.value as PaymentStatus)}>
-          <option>Unpaid</option>
-          <option>Paid</option>
-          <option>Refunded</option>
+          <option value="Unpaid">{PAYMENT_FR.Unpaid}</option>
+          <option value="Paid">{PAYMENT_FR.Paid}</option>
+          <option value="Refunded">{PAYMENT_FR.Refunded}</option>
         </select>
       </Field>
-      <Field label="Assigned partner">
+      <Field label="Partenaire assigné">
         <select className={inputCls} value={partner} onChange={(e) => setPartner(e.target.value)}>
-          <option value="">— Unassigned —</option>
+          <option value="">— Non assigné —</option>
           {PARTNERS.map((p) => (
             <option key={p.name}>{p.name}</option>
           ))}
         </select>
       </Field>
-      <Field label="Status note" hint="Saved to the tracking history, visible to the customer.">
+      <Field label="Note de statut" hint="Enregistrée dans l'historique de suivi, visible par le client.">
         <textarea
           className={`${inputCls} h-20 py-2.5 resize-none`}
-          placeholder="Optional note…"
+          placeholder="Note facultative…"
           value={note}
           onChange={(e) => setNote(e.target.value)}
         />
@@ -76,10 +78,10 @@ export function ManageOrderForm({ order }: { order: Order }) {
         disabled={pending}
         className="h-12 w-full rounded-full bg-brand font-semibold text-white hover:bg-brand-dark active:scale-[0.98] transition disabled:opacity-60"
       >
-        {pending ? "Saving…" : "Save changes"}
+        {pending ? "Enregistrement…" : "Enregistrer les modifications"}
       </button>
       {msg && (
-        <p className={`text-sm font-medium ${msg.startsWith("Saved") ? "text-brand" : "text-red-600"}`}>
+        <p className={`text-sm font-medium ${msg.startsWith("Enregistré") ? "text-brand" : "text-red-600"}`}>
           {msg}
         </p>
       )}

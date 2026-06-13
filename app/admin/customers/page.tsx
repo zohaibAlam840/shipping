@@ -3,14 +3,14 @@ import { getCustomers } from "@/lib/db";
 import { Card, PageTitle } from "@/components/ui";
 import { UserIcon } from "@/components/icons";
 
-export const metadata = { title: "Customers" };
+export const metadata = { title: "Clients" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminCustomersPage() {
   const customers = await getCustomers();
   return (
     <div>
-      <PageTitle title="Customers" subtitle={`${customers.length} with orders`} />
+      <PageTitle title="Clients" subtitle={`${customers.length} avec des commandes`} />
       <div className="space-y-3">
         {customers.map((c) => (
           <Card key={c.email} className="p-4 flex items-center gap-3.5">
@@ -20,16 +20,16 @@ export default async function AdminCustomersPage() {
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-ink text-sm">{c.name}</p>
               <p className="text-xs text-muted mt-0.5 truncate">{c.email}</p>
-              <p className="text-xs text-muted mt-0.5">First order {fmtDate(c.firstOrder)}</p>
+              <p className="text-xs text-muted mt-0.5">Première commande {fmtDate(c.firstOrder)}</p>
             </div>
             <div className="text-right shrink-0">
               <p className="font-bold text-ink text-sm">{eur(c.spend)}</p>
-              <p className="text-xs text-muted">{c.orders} order{c.orders === 1 ? "" : "s"}</p>
+              <p className="text-xs text-muted">{c.orders} commande{c.orders === 1 ? "" : "s"}</p>
             </div>
           </Card>
         ))}
         {customers.length === 0 && (
-          <Card className="p-8 text-center text-sm text-muted">No customers yet.</Card>
+          <Card className="p-8 text-center text-sm text-muted">Aucun client pour le moment.</Card>
         )}
       </div>
     </div>

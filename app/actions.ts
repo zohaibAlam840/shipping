@@ -16,11 +16,6 @@ import {
   type WeightBand,
 } from "@/lib/data";
 
-function randomCode(len: number) {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-}
-
 export interface CreateOrderInput {
   origin: Country;
   destination: Country;
@@ -52,15 +47,30 @@ export async function createOrder(input: CreateOrderInput) {
     (input.insurance ? Math.round(input.parcel.declaredValue * INSURANCE_RATE * 100) / 100 : 0);
   const total = Math.round((Number(rule.base_price) + optionsFee) * 100) / 100;
 
-  // Retry a couple of times in case a random number collides.
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const orderNumber = `YM-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-    const trackingNumber = `YMT-${randomCode(6)}`;
+  // Sequential YonelMa parcel reference: YNM-2026-0001, 0002, …
+  // One reference is used as both the order number and the tracking number,
+  // so it's the single code shared with E-Logik / TAF / PAPS and the customer.
+  const year = new Date().getFullYear();
+  const prefix = `YNM-${year}-`;
+  const { data: last } = await db
+    .from("orders")
+    .select("order_number")
+    .like("order_number", `${prefix}%`)
+    .order("order_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  let seq = last?.order_number
+    ? parseInt(String(last.order_number).slice(prefix.length), 10) + 1
+    : 1;
+
+  // Retry on the (unlikely) chance of a concurrent collision.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const reference = `${prefix}${String(seq).padStart(4, "0")}`;
     const { data: created, error } = await db
       .from("orders")
       .insert({
-        order_number: orderNumber,
-        tracking_number: trackingNumber,
+        order_number: reference,
+        tracking_number: reference,
         customer_name: user.name,
         customer_email: user.email,
         origin: input.origin,
@@ -226,7 +236,7 @@ export async function loginAdmin(formData: FormData) {
     return { success: true };
   }
 
-  return { error: "Invalid username or password" };
+  return { error: "Identifiant ou mot de passe incorrect" };
 }
 
 export async function logoutAdmin() {

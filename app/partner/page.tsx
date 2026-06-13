@@ -15,8 +15,8 @@ export default async function PartnerPage() {
   return (
     <div>
       <PageTitle
-        title="Assigned shipments"
-        subtitle={`${PARTNER_NAME} · ${assigned.length} order(s)`}
+        title="Envois assignés"
+        subtitle={`${PARTNER_NAME} · ${assigned.length} commande(s)`}
       />
       <div className="space-y-3">
         {assigned.map((o) => (
@@ -33,7 +33,7 @@ export default async function PartnerPage() {
                   <p className="text-xs text-muted mt-0.5 flex items-center gap-1">
                     <PinIcon width={12} height={12} /> {o.recipient.address}
                   </p>
-                  <p className="text-xs text-muted mt-0.5">Booked {fmtDate(o.date)}</p>
+                  <p className="text-xs text-muted mt-0.5">Réservé le {fmtDate(o.date)}</p>
                   <div className="mt-1.5">
                     <StatusBadge status={o.status} incident={o.incident} />
                   </div>
@@ -44,7 +44,7 @@ export default async function PartnerPage() {
           </Link>
         ))}
         {assigned.length === 0 && (
-          <Card className="p-8 text-center text-sm text-muted">No shipments assigned right now.</Card>
+          <Card className="p-8 text-center text-sm text-muted">Aucun envoi assigné pour le moment.</Card>
         )}
       </div>
     </div>

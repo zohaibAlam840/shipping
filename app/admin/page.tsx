@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PARTNERS, eur, fmtDate, type Order } from "@/lib/data";
+import { PARTNERS, eur, fmtDate, COUNTRY_FR, type Order } from "@/lib/data";
 import { getOrders, getClaims, getCustomers } from "@/lib/db";
 import { Card, PageTitle, StatusBadge, PaymentBadge } from "@/components/ui";
 import { Donut, BarChart, HBars } from "@/components/charts";
@@ -68,15 +68,15 @@ export default async function AdminPage() {
   // Status phase donut.
   const prep = orders.filter((o) => PREP_STATUSES.includes(o.status)).length;
   const phases = [
-    { label: "Preparing", value: prep, color: "#f5b418" },
-    { label: "In transit", value: inTransit.length, color: "#6366f1" },
-    { label: "Delivered", value: delivered.length, color: "#0b8457" },
+    { label: "En préparation", value: prep, color: "#f5b418" },
+    { label: "En transit", value: inTransit.length, color: "#6366f1" },
+    { label: "Livré", value: delivered.length, color: "#0b8457" },
   ].filter((p) => p.value > 0);
 
   // Routes.
   const routeMap = new Map<string, number>();
   for (const o of orders) {
-    const r = `${o.origin} → ${o.destination}`;
+    const r = `${COUNTRY_FR[o.origin]} → ${COUNTRY_FR[o.destination]}`;
     routeMap.set(r, (routeMap.get(r) ?? 0) + 1);
   }
   const routes = [...routeMap.entries()]
@@ -87,55 +87,55 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <PageTitle title="Operations overview" subtitle="Live from the database" />
+      <PageTitle title="Vue d'ensemble" subtitle="En direct depuis la base de données" />
 
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Revenue" value={eur(revenue)} sub={`avg ${eur(avgOrder)} / order`} icon={<ChartIcon width={18} height={18} />} tone="brand" />
-        <KpiCard label="Active orders" value={String(active.length)} sub={`${orders.length} total · ${inTransit.length} in transit`} icon={<BoxIcon width={18} height={18} />} tone="indigo" />
-        <KpiCard label="Delivered" value={String(delivered.length)} sub={`${deliveryRate}% delivery rate`} icon={<CheckIcon width={18} height={18} />} tone="emerald" />
-        <KpiCard label="Open claims" value={String(openClaims.length)} sub={`${incidents.length} incident(s)`} icon={<AlertIcon width={18} height={18} />} tone="amber" />
+        <KpiCard label="Chiffre d'affaires" value={eur(revenue)} sub={`moy. ${eur(avgOrder)} / commande`} icon={<ChartIcon width={18} height={18} />} tone="brand" />
+        <KpiCard label="Commandes actives" value={String(active.length)} sub={`${orders.length} au total · ${inTransit.length} en transit`} icon={<BoxIcon width={18} height={18} />} tone="indigo" />
+        <KpiCard label="Livrées" value={String(delivered.length)} sub={`${deliveryRate} % de livraison`} icon={<CheckIcon width={18} height={18} />} tone="emerald" />
+        <KpiCard label="Réclamations ouvertes" value={String(openClaims.length)} sub={`${incidents.length} incident(s)`} icon={<AlertIcon width={18} height={18} />} tone="amber" />
       </div>
 
       {/* Analytics */}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display font-bold text-ink">Revenue</h2>
-            <span className="text-xs font-medium text-muted">Last 6 months · paid orders</span>
+            <h2 className="font-display font-bold text-ink">Chiffre d'affaires</h2>
+            <span className="text-xs font-medium text-muted">6 derniers mois · commandes payées</span>
           </div>
           <BarChart data={monthly} valuePrefix="€" />
         </Card>
 
         <Card className="p-5">
-          <h2 className="font-display font-bold text-ink mb-4">Order status</h2>
+          <h2 className="font-display font-bold text-ink mb-4">Statut des commandes</h2>
           {phases.length ? (
-            <Donut segments={phases} centerValue={String(orders.length)} centerLabel="total orders" />
+            <Donut segments={phases} centerValue={String(orders.length)} centerLabel="commandes au total" />
           ) : (
-            <p className="text-sm text-muted">No orders yet.</p>
+            <p className="text-sm text-muted">Aucune commande pour le moment.</p>
           )}
         </Card>
 
         <Card className="p-5">
-          <h2 className="font-display font-bold text-ink mb-4">Top routes</h2>
-          {routes.length ? <HBars data={routes} /> : <p className="text-sm text-muted">No routes yet.</p>}
+          <h2 className="font-display font-bold text-ink mb-4">Principaux trajets</h2>
+          {routes.length ? <HBars data={routes} /> : <p className="text-sm text-muted">Aucun trajet pour le moment.</p>}
         </Card>
 
         <Card className="p-5 lg:col-span-2">
-          <h2 className="font-display font-bold text-ink mb-4">Payments & revenue</h2>
+          <h2 className="font-display font-bold text-ink mb-4">Paiements et revenus</h2>
           <div className="grid grid-cols-4 gap-3">
-            <MiniStat label="Lifetime revenue" value={eur(revenue)} />
-            <MiniStat label="Avg / order" value={eur(avgOrder)} />
-            <MiniStat label="Paid" value={String(paid.length)} />
-            <MiniStat label="Unpaid" value={String(unpaid.length)} />
+            <MiniStat label="Revenu total" value={eur(revenue)} />
+            <MiniStat label="Moy. / commande" value={eur(avgOrder)} />
+            <MiniStat label="Payées" value={String(paid.length)} />
+            <MiniStat label="Impayées" value={String(unpaid.length)} />
           </div>
           {unpaid.length > 0 && (
             <div className="mt-5 rounded-2xl bg-amber-50 border border-amber-200 p-4">
               <div className="flex items-center gap-2 text-sm text-amber-800">
                 <AlertIcon width={16} height={16} />
                 <span>
-                  <span className="font-semibold">{unpaid.length} order{unpaid.length > 1 ? "s" : ""}</span> awaiting payment
-                  ({eur(unpaid.reduce((s, o) => s + o.total, 0))} outstanding).
+                  <span className="font-semibold">{unpaid.length} commande{unpaid.length > 1 ? "s" : ""}</span> en attente de paiement
+                  ({eur(unpaid.reduce((s, o) => s + o.total, 0))} dû).
                 </span>
               </div>
             </div>
@@ -147,8 +147,8 @@ export default async function AdminPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-base font-bold text-ink">Needs attention</h2>
-            <Link href="/admin/orders" className="text-sm font-semibold text-brand">All orders →</Link>
+            <h2 className="font-display text-base font-bold text-ink">À traiter</h2>
+            <Link href="/admin/orders" className="text-sm font-semibold text-brand">Toutes les commandes →</Link>
           </div>
           <div className="space-y-3">
             {attention.map((o) => (
@@ -159,7 +159,7 @@ export default async function AdminPage() {
                       {o.orderNumber} · {o.customer}
                     </p>
                     <p className="text-xs text-muted mt-0.5">
-                      {o.origin} → {o.destination} · {o.band} · {fmtDate(o.date)}
+                      {COUNTRY_FR[o.origin]} → {COUNTRY_FR[o.destination]} · {o.band} · {fmtDate(o.date)}
                     </p>
                     <div className="mt-1.5 flex gap-1.5 flex-wrap">
                       <StatusBadge status={o.status} incident={o.incident} />
@@ -171,15 +171,15 @@ export default async function AdminPage() {
               </Link>
             ))}
             {attention.length === 0 && (
-              <Card className="p-8 text-center text-sm text-muted">Nothing needs attention. 🎉</Card>
+              <Card className="p-8 text-center text-sm text-muted">Rien à traiter. 🎉</Card>
             )}
           </div>
         </div>
 
         <div>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-base font-bold text-ink">Partners</h2>
-            <span className="text-xs font-medium text-muted">{customers.length} customers</span>
+            <h2 className="font-display text-base font-bold text-ink">Partenaires</h2>
+            <span className="text-xs font-medium text-muted">{customers.length} clients</span>
           </div>
           <div className="space-y-3">
             {PARTNERS.map((p) => {
@@ -193,7 +193,7 @@ export default async function AdminPage() {
                   </span>
                   <div className="min-w-0">
                     <p className="font-semibold text-ink text-sm">{p.name}</p>
-                    <p className="text-xs text-muted">{p.type} · {activeCount} active orders</p>
+                    <p className="text-xs text-muted">{p.type} · {activeCount} commande(s) active(s)</p>
                   </div>
                 </Card>
               );
@@ -203,8 +203,8 @@ export default async function AdminPage() {
                 <PlaneIcon width={20} height={20} />
               </span>
               <div className="min-w-0">
-                <p className="font-semibold text-ink text-sm">{inTransit.length} parcels moving</p>
-                <p className="text-xs text-muted">France ↔ Senegal corridor</p>
+                <p className="font-semibold text-ink text-sm">{inTransit.length} colis en mouvement</p>
+                <p className="text-xs text-muted">Corridor France → Sénégal</p>
               </div>
             </Card>
           </div>

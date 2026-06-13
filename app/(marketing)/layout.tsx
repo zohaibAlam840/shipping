@@ -21,25 +21,25 @@ export default function MarketingLayout({
               href="/track"
               className="rounded-full px-3.5 py-2 text-sm font-semibold text-muted transition hover:bg-background hover:text-ink"
             >
-              Track
+              Suivi
             </Link>
             <Link
               href="/calculator"
               className="hidden sm:block rounded-full px-3.5 py-2 text-sm font-semibold text-muted transition hover:bg-background hover:text-ink"
             >
-              Pricing
+              Tarifs
             </Link>
             <Link
               href="/login"
               className="rounded-full px-3.5 py-2 text-sm font-semibold text-muted transition hover:bg-background hover:text-ink"
             >
-              Log in
+              Connexion
             </Link>
             <Link
               href="/book"
               className="ml-1 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-dark active:scale-[0.97]"
             >
-              Ship a parcel
+              Envoyer un colis
             </Link>
           </nav>
         </div>
@@ -55,24 +55,24 @@ export default function MarketingLayout({
               <span className="font-display font-bold">YonelMa</span>
             </div>
             <p className="max-w-xs text-sm leading-relaxed text-white/60">
-              Trusted parcel shipping between France and Senegal — transparent
-              prices, real people, real tracking.
+              Envoi de colis de confiance entre la France et le Sénégal — prix
+              transparents, suivi en temps réel.
             </p>
           </div>
           <div className="text-sm">
             <p className="mb-4 font-display font-bold">Services</p>
             <ul className="space-y-2.5 text-white/60">
-              <li><Link href="/calculator" className="transition hover:text-accent">Price calculator</Link></li>
-              <li><Link href="/book" className="transition hover:text-accent">Book a shipment</Link></li>
-              <li><Link href="/track" className="transition hover:text-accent">Track a parcel</Link></li>
+              <li><Link href="/calculator" className="transition hover:text-accent">Calculateur de prix</Link></li>
+              <li><Link href="/book" className="transition hover:text-accent">Réserver un envoi</Link></li>
+              <li><Link href="/track" className="transition hover:text-accent">Suivre un colis</Link></li>
             </ul>
           </div>
           <div className="text-sm">
-            <p className="mb-4 font-display font-bold">Company</p>
+            <p className="mb-4 font-display font-bold">Société</p>
             <ul className="space-y-2.5 text-white/60">
-              <li><Link href="/login" className="transition hover:text-accent">Customer portal</Link></li>
+              <li><Link href="/login" className="transition hover:text-accent">Espace client</Link></li>
               <li><Link href="/admin" className="transition hover:text-accent">Admin</Link></li>
-              <li><Link href="/partner" className="transition hover:text-accent">Partner workspace</Link></li>
+              <li><Link href="/partner" className="transition hover:text-accent">Espace partenaire</Link></li>
             </ul>
           </div>
         </div>

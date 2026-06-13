@@ -15,13 +15,13 @@ export function ProfileForm({ user }: { user: SessionUser }) {
   return (
     <>
       <form action={action} className="space-y-3">
-        <Field label="Full name">
+        <Field label="Nom complet">
           <input name="name" className={inputCls} defaultValue={user.name} />
         </Field>
-        <Field label="Phone">
+        <Field label="Téléphone">
           <input name="phone" className={inputCls} defaultValue={user.phone} />
         </Field>
-        <Field label="Address (pickup)">
+        <Field label="Adresse (enlèvement)">
           <input name="address" className={inputCls} defaultValue={user.address} />
         </Field>
         {state?.error && (
@@ -33,7 +33,7 @@ export function ProfileForm({ user }: { user: SessionUser }) {
           disabled={pending}
           className="h-12 w-full rounded-full bg-brand font-semibold text-white hover:bg-brand-dark active:scale-[0.98] transition disabled:opacity-60"
         >
-          {pending ? "Saving…" : state?.ok ? "Saved ✓" : "Save changes"}
+          {pending ? "Enregistrement…" : state?.ok ? "Enregistré ✓" : "Enregistrer les modifications"}
         </button>
       </form>
 
@@ -42,7 +42,7 @@ export function ProfileForm({ user }: { user: SessionUser }) {
         disabled={loggingOut}
         className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-full border border-line bg-card font-semibold text-muted hover:text-ink transition disabled:opacity-60"
       >
-        <LogoutIcon width={18} height={18} /> {loggingOut ? "Logging out…" : "Log out"}
+        <LogoutIcon width={18} height={18} /> {loggingOut ? "Déconnexion…" : "Se déconnecter"}
       </button>
     </>
   );

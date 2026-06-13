@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { BoxIcon, AlertIcon } from "@/components/icons";
 
 const NAV = [
-  { href: "/partner", label: "Assigned", icon: BoxIcon, exact: true },
+  { href: "/partner", label: "Assignés", icon: BoxIcon, exact: true },
   { href: "/partner/incidents", label: "Incidents", icon: AlertIcon },
 ];
 

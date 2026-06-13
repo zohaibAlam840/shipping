@@ -17,40 +17,40 @@ export default function SignupPage() {
           <div className="mb-4 flex justify-center">
             <Logo size={48} />
           </div>
-          <h1 className="text-[28px] font-extrabold tracking-tight text-ink">Create your account</h1>
-          <p className="mt-1.5 text-sm text-muted">Book and track parcels in minutes.</p>
+          <h1 className="text-[28px] font-extrabold tracking-tight text-ink">Créez votre compte</h1>
+          <p className="mt-1.5 text-sm text-muted">Réservez et suivez vos colis en quelques minutes.</p>
         </div>
         <div className="rounded-3xl border border-line bg-card p-6 shadow-lift sm:p-8">
           {state?.info ? (
             <div className="rounded-xl bg-brand-light/60 border border-brand/25 p-4 text-sm font-medium text-ink">
               {state.info}{" "}
               <Link href="/login" className="font-semibold text-brand hover:underline">
-                Go to login →
+                Aller à la connexion →
               </Link>
             </div>
           ) : (
             <form action={action} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <Field label="First name">
+                <Field label="Prénom">
                   <input name="firstName" className={inputCls} placeholder="Awa" />
                 </Field>
-                <Field label="Last name">
+                <Field label="Nom">
                   <input name="lastName" className={inputCls} placeholder="Ndiaye" />
                 </Field>
               </div>
-              <Field label="Email">
-                <input name="email" type="email" required className={inputCls} placeholder="you@example.com" />
+              <Field label="E-mail">
+                <input name="email" type="email" required className={inputCls} placeholder="vous@exemple.com" />
               </Field>
-              <Field label="Phone">
+              <Field label="Téléphone">
                 <input name="phone" type="tel" className={inputCls} placeholder="+33 6 12 34 56 78" />
               </Field>
-              <Field label="Password">
-                <input name="password" type="password" required className={inputCls} placeholder="At least 8 characters" />
+              <Field label="Mot de passe">
+                <input name="password" type="password" required className={inputCls} placeholder="Au moins 8 caractères" />
               </Field>
               <label className="flex items-start gap-2.5 text-xs leading-relaxed text-muted">
                 <input name="consent" type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--brand)]" />
-                I agree to the privacy policy and consent to YonelMa processing my
-                data to provide the shipping service (GDPR).
+                J'accepte la politique de confidentialité et je consens à ce que
+                YonelMa traite mes données pour fournir le service d'expédition (RGPD).
               </label>
               {state?.error && (
                 <p className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm font-medium text-red-700">
@@ -62,15 +62,15 @@ export default function SignupPage() {
                 disabled={pending}
                 className="h-[52px] w-full rounded-full bg-brand font-semibold text-white shadow-soft transition hover:bg-brand-dark active:scale-[0.98] disabled:opacity-60"
               >
-                {pending ? "Creating account…" : "Create account"}
+                {pending ? "Création du compte…" : "Créer un compte"}
               </button>
             </form>
           )}
         </div>
         <p className="mt-6 text-center text-sm text-muted">
-          Already have an account?{" "}
+          Vous avez déjà un compte ?{" "}
           <Link href="/login" className="font-semibold text-brand hover:underline">
-            Log in
+            Se connecter
           </Link>
         </p>
       </div>

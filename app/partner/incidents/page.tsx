@@ -20,7 +20,7 @@ export default async function PartnerIncidentsPage() {
 
   return (
     <div>
-      <PageTitle title="Incidents" subtitle="Issues you reported on assigned shipments." />
+      <PageTitle title="Incidents" subtitle="Problèmes signalés sur vos envois assignés." />
       <div className="space-y-3">
         {incidents.map(({ order, event }) => (
           <Card key={order.id + event.at} className="p-4 flex items-start gap-3.5">
@@ -35,7 +35,7 @@ export default async function PartnerIncidentsPage() {
           </Card>
         ))}
         {incidents.length === 0 && (
-          <Card className="p-8 text-center text-sm text-muted">No incidents reported. 🎉</Card>
+          <Card className="p-8 text-center text-sm text-muted">Aucun incident signalé. 🎉</Card>
         )}
       </div>
     </div>

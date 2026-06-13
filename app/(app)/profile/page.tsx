@@ -3,7 +3,7 @@ import { Card, PageTitle } from "@/components/ui";
 import { UserIcon } from "@/components/icons";
 import { ProfileForm } from "./profile-form";
 
-export const metadata = { title: "Profile" };
+export const metadata = { title: "Profil" };
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
@@ -11,7 +11,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <PageTitle title="Profile" subtitle="Your details and preferences." />
+      <PageTitle title="Profil" subtitle="Vos informations et préférences." />
 
       <Card className="p-5 mb-4">
         <div className="flex items-center gap-3.5 mb-5">
@@ -29,8 +29,8 @@ export default async function ProfilePage() {
       <Card className="p-5 mb-4">
         <h2 className="font-bold text-ink mb-3">Notifications</h2>
         {[
-          ["Email updates", true],
-          ["WhatsApp updates", true],
+          ["Notifications par e-mail", true],
+          ["Notifications WhatsApp", true],
           ["Promotions", false],
         ].map(([label, on]) => (
           <label key={String(label)} className="flex items-center justify-between py-2.5 border-b border-line last:border-0 text-sm font-medium text-ink">
@@ -41,16 +41,16 @@ export default async function ProfilePage() {
       </Card>
 
       <Card className="p-5">
-        <h2 className="font-bold text-ink mb-2">Privacy (GDPR)</h2>
+        <h2 className="font-bold text-ink mb-2">Confidentialité (RGPD)</h2>
         <p className="text-sm text-muted mb-3">
-          Export your data or request account deletion at any time.
+          Exportez vos données ou demandez la suppression de votre compte à tout moment.
         </p>
         <div className="flex gap-2">
           <button className="h-10 flex-1 rounded-full border border-line text-sm font-semibold text-ink hover:border-brand/40 transition">
-            Export my data
+            Exporter mes données
           </button>
           <button className="h-10 flex-1 rounded-full border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50 transition">
-            Delete account
+            Supprimer le compte
           </button>
         </div>
       </Card>

@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { eur, fmtDate } from "@/lib/data";
+import { eur, fmtDate, COUNTRY_FR } from "@/lib/data";
 import { requireUser } from "@/lib/auth";
 import { getOrdersByEmail } from "@/lib/db";
 import { Card, PageTitle, StatusBadge, PaymentBadge } from "@/components/ui";
 import { BoxIcon, ChevronRightIcon, PlusIcon } from "@/components/icons";
 
-export const metadata = { title: "My shipments" };
+export const metadata = { title: "Mes envois" };
 export const dynamic = "force-dynamic";
 
 export default async function ShipmentsPage() {
@@ -14,18 +14,21 @@ export default async function ShipmentsPage() {
   return (
     <div>
       <PageTitle
-        title="My shipments"
-        subtitle={`${orders.length} total`}
+        title="Mes envois"
+        subtitle={`${orders.length} au total`}
         action={
           <Link
             href="/book"
             className="inline-flex h-10 items-center gap-1.5 rounded-full bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-dark transition"
           >
-            <PlusIcon width={17} height={17} /> New
+            <PlusIcon width={17} height={17} /> Nouveau
           </Link>
         }
       />
       <div className="space-y-3">
+        {orders.length === 0 && (
+          <Card className="p-8 text-center text-sm text-muted">Aucun envoi pour le moment.</Card>
+        )}
         {orders.map((o) => (
           <Link key={o.id} href={`/shipments/${o.id}`} className="block group">
             <Card className="p-4 group-hover:border-brand/40 transition">
@@ -36,7 +39,7 @@ export default async function ShipmentsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-semibold text-ink text-sm truncate">
-                      {o.origin} → {o.destination}
+                      {COUNTRY_FR[o.origin]} → {COUNTRY_FR[o.destination]}
                     </p>
                     <p className="font-bold text-ink text-sm">{eur(o.total)}</p>
                   </div>

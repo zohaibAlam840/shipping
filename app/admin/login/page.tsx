@@ -25,8 +25,8 @@ export default function AdminLoginPage() {
         router.push("/admin");
         router.refresh();
       }
-    } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+    } catch {
+      setError("Une erreur inattendue est survenue. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
             YonelMa Admin
           </h1>
           <p className="mt-2 text-sm text-muted">
-            Operations control & shipment management
+            Contrôle des opérations et gestion des envois
           </p>
         </div>
 
@@ -57,19 +57,19 @@ export default function AdminLoginPage() {
           <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-brand to-brand-dark" />
           
           <form className="space-y-5" onSubmit={handleSubmit}>
-            <Field label="Username">
+            <Field label="Identifiant">
               <input
                 type="text"
                 name="username"
                 required
                 className={inputCls}
-                placeholder="Enter admin username"
+                placeholder="Saisissez l'identifiant admin"
                 autoComplete="username"
                 disabled={loading}
               />
             </Field>
 
-            <Field label="Password">
+            <Field label="Mot de passe">
               <input
                 type="password"
                 name="password"
@@ -114,17 +114,17 @@ export default function AdminLoginPage() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Logging in...
+                  Connexion...
                 </span>
               ) : (
-                "Log in to Console"
+                "Se connecter à la console"
               )}
             </button>
           </form>
         </Card>
 
         <p className="mt-8 text-center text-xs text-muted">
-          Secured with environment configuration.
+          Sécurisé par la configuration d'environnement.
         </p>
       </div>
     </div>
