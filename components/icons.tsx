@@ -141,6 +141,13 @@ export const LogoutIcon = (p: P) => (
   </Base>
 );
 
+export const DownloadIcon = (p: P) => (
+  <Base {...p}>
+    <path d="M12 3v12M7.5 10.5 12 15l4.5-4.5" />
+    <path d="M4 20h16" />
+  </Base>
+);
+
 export const ClipboardIcon = (p: P) => (
   <Base {...p}>
     <rect x="5.5" y="4.5" width="13" height="16.5" rx="2" />

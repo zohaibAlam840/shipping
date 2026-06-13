@@ -99,11 +99,21 @@ export async function createOrder(input: CreateOrderInput) {
       revalidatePath("/dashboard");
       revalidatePath("/shipments");
       revalidatePath("/admin");
-      return { id: created.id as string, orderNumber, trackingNumber, total };
+      return {
+        id: created.id as string,
+        orderNumber: reference,
+        trackingNumber: reference,
+        total,
+      };
     }
-    if (error && error.code !== "23505") return { error: error.message };
+    // Reference already taken (concurrent booking) → try the next number.
+    if (error && error.code === "23505") {
+      seq++;
+      continue;
+    }
+    if (error) return { error: error.message };
   }
-  return { error: "Could not generate a unique order number — try again." };
+  return { error: "Impossible de générer une référence unique — réessayez." };
 }
 
 export async function updateOrderAdmin(
