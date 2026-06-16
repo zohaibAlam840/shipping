@@ -23,6 +23,7 @@ export async function GET() {
     "Contenu",
     "Valeur déclarée (€)",
     "Option de livraison",
+    "Point de dépôt (France)",
     "Partenaire",
     "Statut",
   ];
@@ -39,6 +40,7 @@ export async function GET() {
     o.parcel.description,
     o.parcel.declaredValue,
     DELIVERY_FR[o.delivery],
+    o.dropoffPoint ?? "",
     o.partner ?? "Non assigné",
     STATUS_FR[o.status],
   ]);

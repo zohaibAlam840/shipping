@@ -2,11 +2,12 @@
 
 import { usePathname } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { ChartIcon, BoxIcon, UsersIcon, AlertIcon } from "@/components/icons";
+import { ChartIcon, BoxIcon, UsersIcon, AlertIcon, TruckIcon } from "@/components/icons";
 
 const NAV = [
   { href: "/admin", label: "Indicateurs", icon: ChartIcon, exact: true },
   { href: "/admin/orders", label: "Commandes", icon: BoxIcon },
+  { href: "/admin/partners", label: "Partenaires", icon: TruckIcon },
   { href: "/admin/customers", label: "Clients", icon: UsersIcon },
   { href: "/admin/claims", label: "Réclamations", icon: AlertIcon },
 ];

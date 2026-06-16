@@ -18,6 +18,12 @@ export default function MarketingLayout({
           </Link>
           <nav className="ml-auto flex items-center gap-1">
             <Link
+              href="/"
+              className="rounded-full px-3.5 py-2 text-sm font-semibold text-muted transition hover:bg-background hover:text-ink"
+            >
+              Accueil
+            </Link>
+            <Link
               href="/track"
               className="rounded-full px-3.5 py-2 text-sm font-semibold text-muted transition hover:bg-background hover:text-ink"
             >
@@ -31,15 +37,9 @@ export default function MarketingLayout({
             </Link>
             <Link
               href="/login"
-              className="rounded-full px-3.5 py-2 text-sm font-semibold text-muted transition hover:bg-background hover:text-ink"
-            >
-              Connexion
-            </Link>
-            <Link
-              href="/book"
               className="ml-1 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-brand-dark active:scale-[0.97]"
             >
-              Envoyer un colis
+              Connexion
             </Link>
           </nav>
         </div>
@@ -47,7 +47,7 @@ export default function MarketingLayout({
 
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-line bg-[#06301f] text-white">
+      <footer className="border-t border-line bg-[#07234a] text-white">
         <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:grid-cols-3 sm:px-6">
           <div>
             <div className="mb-4 flex items-center gap-2.5">

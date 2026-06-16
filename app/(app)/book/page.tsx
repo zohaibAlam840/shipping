@@ -4,20 +4,33 @@
 // Pure frontend for now; "confirm" fakes an order number.
 import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
-import { quote, eur, COUNTRY_FR, DELIVERY_FR, type DeliveryOption } from "@/lib/data";
+import {
+  quote,
+  eur,
+  COUNTRY_FR,
+  DELIVERY_FR,
+  MONDIAL_RELAY_POINTS,
+  LAPOSTE_OFFICES,
+  type DeliveryOption,
+} from "@/lib/data";
 import { createOrder } from "@/app/actions";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { Calculator, DEFAULT_CALC, type CalcState } from "@/components/calculator";
 import { Card, PageTitle, Field, inputCls } from "@/components/ui";
+import { PayButton } from "@/components/pay-button";
 import { ArrowRightIcon, CheckIcon, PinIcon, TruckIcon, HomeIcon } from "@/components/icons";
 
+const STRIPE_ENABLED = Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+
 const STEPS = ["Devis", "Détails", "Dépôt", "Récapitulatif"] as const;
+const OTHER = "__other__";
 
 interface BookingState {
   calc: CalcState;
   recipient: { name: string; phone: string; address: string };
   parcel: { weight: string; description: string; declaredValue: string; dimensions: string };
   delivery: DeliveryOption;
+  dropoffPoint: string;
 }
 
 const DELIVERY_OPTIONS: { value: DeliveryOption; icon: typeof PinIcon; text: string; fee: string }[] = [
@@ -28,16 +41,23 @@ const DELIVERY_OPTIONS: { value: DeliveryOption; icon: typeof PinIcon; text: str
 
 export default function BookPage() {
   const [step, setStep] = useState(0);
-  const [done, setDone] = useState<{ orderNumber: string; trackingNumber: string } | null>(null);
+  const [done, setDone] = useState<{ id: string; orderNumber: string; trackingNumber: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [sender, setSender] = useState({ name: "Vous", phone: "" });
+  // Whether the drop-off point is being typed manually ("Autre").
+  const [customDrop, setCustomDrop] = useState(false);
   const [b, setB] = useState<BookingState>({
     calc: DEFAULT_CALC,
     recipient: { name: "", phone: "", address: "" },
     parcel: { weight: "", description: "", declaredValue: "", dimensions: "" },
     delivery: "Relay point",
+    dropoffPoint: "",
   });
+
+  const needsDropoff = b.delivery === "Relay point" || b.delivery === "Post office";
+  const dropoffValid = !needsDropoff || b.dropoffPoint.trim().length > 0;
+  const dropoffList = b.delivery === "Post office" ? LAPOSTE_OFFICES : MONDIAL_RELAY_POINTS;
 
   useEffect(() => {
     createSupabaseBrowser()
@@ -75,9 +95,10 @@ export default function BookPage() {
           declaredValue: Number(b.parcel.declaredValue) || 0,
           dimensions: b.parcel.dimensions,
         },
+        dropoffPoint: needsDropoff ? b.dropoffPoint : undefined,
       });
       if ("error" in res) setError(res.error ?? "Une erreur est survenue.");
-      else setDone({ orderNumber: res.orderNumber, trackingNumber: res.trackingNumber });
+      else setDone({ id: res.id, orderNumber: res.orderNumber, trackingNumber: res.trackingNumber });
     });
   }
 
@@ -106,6 +127,9 @@ export default function BookPage() {
           </p>
         </Card>
         <div className="mt-6 flex flex-col gap-2">
+          {STRIPE_ENABLED && (
+            <PayButton orderId={done.id} className="w-full" label={`Payer ${q ? eur(q.total) : ""} en ligne`} />
+          )}
           <Link href="/shipments" className="h-12 rounded-full bg-brand text-white font-semibold flex items-center justify-center hover:bg-brand-dark transition">
             Voir mes envois
           </Link>
@@ -234,6 +258,47 @@ export default function BookPage() {
                 <span className={`text-sm font-bold ${opt.fee === "Gratuit" ? "text-brand" : "text-ink"}`}>{opt.fee}</span>
               </button>
             ))}
+
+            {needsDropoff && (
+              <div className="pt-2">
+                <Field
+                  label={
+                    b.delivery === "Post office"
+                      ? "Choisissez le bureau de poste La Poste"
+                      : "Choisissez le point relais Mondial Relay"
+                  }
+                  hint="Lieu où vous déposerez le colis en France."
+                >
+                  <select
+                    className={inputCls}
+                    value={customDrop ? OTHER : b.dropoffPoint}
+                    onChange={(e) => {
+                      if (e.target.value === OTHER) {
+                        setCustomDrop(true);
+                        setB({ ...b, dropoffPoint: "" });
+                      } else {
+                        setCustomDrop(false);
+                        setB({ ...b, dropoffPoint: e.target.value });
+                      }
+                    }}
+                  >
+                    <option value="">— Sélectionner —</option>
+                    {dropoffList.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                    <option value={OTHER}>Autre (préciser)…</option>
+                  </select>
+                </Field>
+                {customDrop && (
+                  <input
+                    className={`${inputCls} mt-2`}
+                    placeholder="Nom et adresse du point de dépôt"
+                    value={b.dropoffPoint}
+                    onChange={(e) => setB({ ...b, dropoffPoint: e.target.value })}
+                  />
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -249,6 +314,7 @@ export default function BookPage() {
                 ["Livrer à", b.recipient.address],
                 ["Contenu", b.parcel.description],
                 ["Dépôt", DELIVERY_FR[b.delivery]],
+                ...(needsDropoff && b.dropoffPoint ? [["Point de dépôt", b.dropoffPoint] as const] : []),
                 ["Assurance", b.calc.insurance ? `Oui (valeur ${eur(Number(b.parcel.declaredValue) || b.calc.declaredValue)})` : "Non"],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4">
@@ -268,7 +334,7 @@ export default function BookPage() {
               </div>
             </div>
             <p className="text-xs text-muted">
-              Payez au dépôt ou à l'enlèvement. Le paiement par carte en ligne arrive bientôt.
+              Après confirmation, payez en ligne par carte ou au dépôt / à l'enlèvement.
             </p>
           </div>
         )}
@@ -287,7 +353,7 @@ export default function BookPage() {
         {step < STEPS.length - 1 ? (
           <button
             type="button"
-            disabled={step === 1 && !detailsValid}
+            disabled={(step === 1 && !detailsValid) || (step === 2 && !dropoffValid)}
             onClick={() => setStep(step + 1)}
             className="h-12 flex-1 rounded-full bg-brand font-semibold text-white hover:bg-brand-dark active:scale-[0.98] transition disabled:opacity-40 disabled:pointer-events-none inline-flex items-center justify-center gap-2"
           >

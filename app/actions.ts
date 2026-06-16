@@ -24,6 +24,7 @@ export interface CreateOrderInput {
   insurance: boolean;
   recipient: { name: string; phone: string; address: string };
   parcel: { weight: number; description: string; declaredValue: number; dimensions: string };
+  dropoffPoint?: string;
 }
 
 export async function createOrder(input: CreateOrderInput) {
@@ -64,29 +65,36 @@ export async function createOrder(input: CreateOrderInput) {
     : 1;
 
   // Retry on the (unlikely) chance of a concurrent collision.
-  for (let attempt = 0; attempt < 5; attempt++) {
+  // Include the drop-off point if the column exists; gracefully fall back if
+  // the `dropoff_point` column hasn't been added to the table yet.
+  let includeDropoff = Boolean(input.dropoffPoint);
+
+  for (let attempt = 0; attempt < 6; attempt++) {
     const reference = `${prefix}${String(seq).padStart(4, "0")}`;
+    const row: Record<string, unknown> = {
+      order_number: reference,
+      tracking_number: reference,
+      customer_name: user.name,
+      customer_email: user.email,
+      origin: input.origin,
+      destination: input.destination,
+      band: input.band,
+      delivery: input.delivery,
+      insurance: input.insurance,
+      recipient_name: input.recipient.name,
+      recipient_phone: input.recipient.phone,
+      recipient_address: input.recipient.address,
+      parcel_weight: input.parcel.weight,
+      parcel_description: input.parcel.description,
+      parcel_declared_value: input.parcel.declaredValue,
+      parcel_dimensions: input.parcel.dimensions,
+      total,
+    };
+    if (includeDropoff) row.dropoff_point = input.dropoffPoint;
+
     const { data: created, error } = await db
       .from("orders")
-      .insert({
-        order_number: reference,
-        tracking_number: reference,
-        customer_name: user.name,
-        customer_email: user.email,
-        origin: input.origin,
-        destination: input.destination,
-        band: input.band,
-        delivery: input.delivery,
-        insurance: input.insurance,
-        recipient_name: input.recipient.name,
-        recipient_phone: input.recipient.phone,
-        recipient_address: input.recipient.address,
-        parcel_weight: input.parcel.weight,
-        parcel_description: input.parcel.description,
-        parcel_declared_value: input.parcel.declaredValue,
-        parcel_dimensions: input.parcel.dimensions,
-        total,
-      })
+      .insert(row)
       .select("id")
       .single();
 
@@ -109,6 +117,11 @@ export async function createOrder(input: CreateOrderInput) {
     // Reference already taken (concurrent booking) → try the next number.
     if (error && error.code === "23505") {
       seq++;
+      continue;
+    }
+    // `dropoff_point` column not added yet → retry without it (same number).
+    if (error && (error.code === "PGRST204" || /dropoff_point/.test(error.message))) {
+      includeDropoff = false;
       continue;
     }
     if (error) return { error: error.message };

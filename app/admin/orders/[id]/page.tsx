@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eur, fmtDate, COUNTRY_FR } from "@/lib/data";
+import { eur, fmtDate, COUNTRY_FR, DELIVERY_FR } from "@/lib/data";
 import { getOrderById } from "@/lib/db";
 import { Card, PageTitle, StatusBadge, PaymentBadge, Timeline } from "@/components/ui";
 import { ManageOrderForm } from "./manage-form";
@@ -46,6 +46,10 @@ export default async function AdminOrderDetail({
               <div><dt className="text-muted text-xs">Contenu</dt><dd className="font-semibold text-ink">{order.parcel.description} · {order.parcel.weightKg} kg</dd></div>
               <div><dt className="text-muted text-xs">Destinataire</dt><dd className="font-semibold text-ink">{order.recipient.name} · {order.recipient.phone}</dd></div>
               <div><dt className="text-muted text-xs">Adresse</dt><dd className="font-semibold text-ink">{order.recipient.address}</dd></div>
+              <div><dt className="text-muted text-xs">Option de livraison</dt><dd className="font-semibold text-ink">{DELIVERY_FR[order.delivery]}</dd></div>
+              {order.dropoffPoint && (
+                <div><dt className="text-muted text-xs">Point de dépôt</dt><dd className="font-semibold text-ink">{order.dropoffPoint}</dd></div>
+              )}
               <div><dt className="text-muted text-xs">Suivi</dt><dd className="font-mono font-semibold text-ink">{order.trackingNumber}</dd></div>
             </dl>
           </Card>

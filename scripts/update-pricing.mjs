@@ -20,11 +20,11 @@ const headers = {
 };
 
 const GRID = [
-  { band: "0-1kg", base_price: 19, transit_days: "5–7 jours" },
-  { band: "1-3kg", base_price: 39, transit_days: "5–7 jours" },
-  { band: "3-7kg", base_price: 64, transit_days: "6–8 jours" },
-  { band: "7-15kg", base_price: 109, transit_days: "7–10 jours" },
-  { band: "15-25kg", base_price: 169, transit_days: "7–10 jours" },
+  { band: "0-1kg", base_price: 19, transit_days: "5–10 jours" },
+  { band: "1-3kg", base_price: 39, transit_days: "5–10 jours" },
+  { band: "3-7kg", base_price: 64, transit_days: "5–10 jours" },
+  { band: "7-15kg", base_price: 109, transit_days: "5–10 jours" },
+  { band: "15-25kg", base_price: 169, transit_days: "5–10 jours" },
 ];
 
 // 1) Remove the Sénégal → France route.

@@ -193,7 +193,7 @@ export default async function AdminPage() {
                   </span>
                   <div className="min-w-0">
                     <p className="font-semibold text-ink text-sm">{p.name}</p>
-                    <p className="text-xs text-muted">{p.type} · {activeCount} commande(s) active(s)</p>
+                    <p className="text-xs text-muted">{p.region} · {activeCount} commande(s) active(s)</p>
                   </div>
                 </Card>
               );

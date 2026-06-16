@@ -44,12 +44,17 @@ export const DESTINATION: Country = "Senegal";
 // recomputes the real price from the DB when an order is created.
 // Official YonelMa pricing grid (France → Sénégal).
 export const PRICING_RULES: PricingRule[] = [
-  { origin: "France", destination: "Senegal", band: "0-1kg", basePrice: 19, transitDays: "5–7 jours" },
-  { origin: "France", destination: "Senegal", band: "1-3kg", basePrice: 39, transitDays: "5–7 jours" },
-  { origin: "France", destination: "Senegal", band: "3-7kg", basePrice: 64, transitDays: "6–8 jours" },
-  { origin: "France", destination: "Senegal", band: "7-15kg", basePrice: 109, transitDays: "7–10 jours" },
-  { origin: "France", destination: "Senegal", band: "15-25kg", basePrice: 169, transitDays: "7–10 jours" },
+  { origin: "France", destination: "Senegal", band: "0-1kg", basePrice: 19, transitDays: "5–10 jours" },
+  { origin: "France", destination: "Senegal", band: "1-3kg", basePrice: 39, transitDays: "5–10 jours" },
+  { origin: "France", destination: "Senegal", band: "3-7kg", basePrice: 64, transitDays: "5–10 jours" },
+  { origin: "France", destination: "Senegal", band: "7-15kg", basePrice: 109, transitDays: "5–10 jours" },
+  { origin: "France", destination: "Senegal", band: "15-25kg", basePrice: 169, transitDays: "5–10 jours" },
 ];
+
+// Feature flags — flip to re-enable later without code changes elsewhere.
+export const FEATURES = {
+  reviews: false, // customer testimonials hidden until we have real ones
+};
 
 export const HOME_COLLECTION_FEE = 18;
 export const INSURANCE_RATE = 0.04; // 4% of declared value
@@ -104,6 +109,7 @@ export interface Order {
   insurance: boolean;
   recipient: { name: string; phone: string; address: string };
   parcel: { weightKg: number; description: string; declaredValue: number; dimensions: string };
+  dropoffPoint?: string | null; // chosen La Poste office / Mondial Relay point
   total: number;
   status: OrderStatus;
   payment: PaymentStatus;
@@ -113,10 +119,48 @@ export interface Order {
   log: StatusEvent[];
 }
 
-// Registered logistics partners (static until partner accounts exist).
-export const PARTNERS = [
-  { name: "DakarExpress 3PL", type: "3PL", contact: "ops@dakarexpress.sn" },
-  { name: "Teranga Logistics", type: "Freight", contact: "dispatch@teranga.sn" },
+// Logistics partners. `api` reflects whether YonelMa is connected to their
+// system yet: "connected" = live API, "pending" = integration in progress,
+// "manual" = handled by email/manifest for now.
+export type PartnerApiStatus = "connected" | "pending" | "manual";
+export interface Partner {
+  name: string;
+  region: "France" | "Sénégal";
+  role: string;
+  api: PartnerApiStatus;
+}
+
+export const PARTNERS: Partner[] = [
+  { name: "Mondial Relay", region: "France", role: "Points relais · dépôt colis", api: "pending" },
+  { name: "La Poste", region: "France", role: "Bureaux de poste · dépôt colis", api: "pending" },
+  { name: "E-Logik", region: "France", role: "Logistique & entrepôt", api: "pending" },
+  { name: "TAF Afrique", region: "France", role: "Fret France → Sénégal", api: "pending" },
+  { name: "PAPS Transit", region: "Sénégal", role: "Transit & dédouanement", api: "pending" },
+  { name: "PAPS Livraison", region: "Sénégal", role: "Livraison dernier kilomètre", api: "pending" },
+];
+
+export const PARTNER_API_FR: Record<PartnerApiStatus, string> = {
+  connected: "Connecté",
+  pending: "Intégration en cours",
+  manual: "Manuel (e-mail / manifeste)",
+};
+
+// Sample drop-off points. These are placeholders until the Mondial Relay /
+// La Poste APIs are connected and return real points near the sender.
+export const MONDIAL_RELAY_POINTS = [
+  "Tabac de la Gare — 12 Rue de la Gare, 75010 Paris",
+  "Carrefour City — 45 Bd Voltaire, 75011 Paris",
+  "Presse du Centre — 8 Rue Nationale, 59000 Lille",
+  "Épicerie du Coin — 23 Cours Lafayette, 69003 Lyon",
+  "Librairie Centrale — 5 Rue Paradis, 13001 Marseille",
+];
+
+export const LAPOSTE_OFFICES = [
+  "Bureau de Poste Paris Louvre — 52 Rue du Louvre, 75001 Paris",
+  "Bureau de Poste Lyon Bellecour — 10 Place Bellecour, 69002 Lyon",
+  "Bureau de Poste Marseille Colbert — 1 Pl. de l'Hôtel des Postes, 13001 Marseille",
+  "Bureau de Poste Lille Centre — 7 Rue de Béthune, 59000 Lille",
+  "Bureau de Poste Toulouse Capitole — 9 Rue Lapeyrouse, 31000 Toulouse",
 ];
 
 // "Signed-in" demo customer until auth lands.

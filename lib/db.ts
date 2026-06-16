@@ -44,6 +44,7 @@ function toOrder(r: any): Order {
       declaredValue: Number(r.parcel_declared_value ?? 0),
       dimensions: r.parcel_dimensions ?? "",
     },
+    dropoffPoint: r.dropoff_point ?? null,
     total: Number(r.total),
     status: r.status as OrderStatus,
     payment: r.payment as PaymentStatus,

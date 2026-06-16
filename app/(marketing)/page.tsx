@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PRICING_RULES, eur } from "@/lib/data";
+import { PRICING_RULES, eur, FEATURES } from "@/lib/data";
 import { PrimaryLink, GhostLink } from "@/components/ui";
 import {
   BoxIcon,
@@ -35,7 +35,7 @@ const FAQS = [
   },
   {
     q: "Comment puis-je payer ?",
-    a: "Réservez en ligne et payez au dépôt ou à l'enlèvement. Le paiement par carte en ligne arrive bientôt.",
+    a: "Payez en ligne par carte bancaire en toute sécurité, ou au moment du dépôt / de l'enlèvement.",
   },
 ];
 
@@ -113,12 +113,12 @@ export default function HomePage() {
   return (
     <div>
       {/* ============ Hero ============ */}
-      <section className="relative overflow-hidden bg-[#06301f] text-white">
+      <section className="relative overflow-hidden bg-[#07234a] text-white">
         {/* layered glows */}
         <div className="pointer-events-none absolute inset-0" aria-hidden>
-          <div className="absolute -top-40 left-1/2 h-[560px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(11,132,87,0.9),transparent)]" />
+          <div className="absolute -top-40 left-1/2 h-[560px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(21,101,216,0.9),transparent)]" />
           <div className="absolute -right-32 top-24 h-96 w-96 rounded-full bg-[radial-gradient(closest-side,rgba(245,180,24,0.22),transparent)]" />
-          <div className="absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-[radial-gradient(closest-side,rgba(11,132,87,0.5),transparent)]" />
+          <div className="absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-[radial-gradient(closest-side,rgba(21,101,216,0.5),transparent)]" />
           {/* dotted route line */}
           <svg className="absolute inset-x-0 bottom-10 hidden lg:block opacity-25" height="120" width="100%" preserveAspectRatio="none" viewBox="0 0 1200 120">
             <path d="M-20,90 C300,20 900,140 1220,40" fill="none" stroke="white" strokeWidth="2" strokeDasharray="2 10" strokeLinecap="round" />
@@ -144,7 +144,7 @@ export default function HomePage() {
               temps réel pour chaque colis jusqu'aux mains de votre famille.
             </p>
             <div className="anim-fade-up anim-d3 mt-9 flex flex-col gap-3 sm:flex-row">
-              <PrimaryLink href="/book" className="!bg-accent !text-[#06301f] !h-[54px] !px-8 shadow-lift hover:!bg-amber-400">
+              <PrimaryLink href="/book" className="!bg-accent !text-[#07234a] !h-[54px] !px-8 shadow-lift hover:!bg-amber-400">
                 Envoyer un colis <ArrowRightIcon width={18} height={18} />
               </PrimaryLink>
               <GhostLink href="/track" className="!h-[54px] !px-8 !bg-white/10 !text-white !border-white/20 backdrop-blur hover:!text-white hover:!border-white/50">
@@ -173,6 +173,25 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ============ Drop-off banner ============ */}
+      <section className="mx-auto w-full max-w-6xl px-4 sm:px-6 pt-12 sm:pt-16">
+        <div className="flex flex-col items-center gap-4 rounded-3xl border border-brand/15 bg-brand-light/50 p-6 text-center sm:flex-row sm:text-left sm:p-7">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand text-white">
+            <PinIcon width={28} height={28} />
+          </span>
+          <div>
+            <h3 className="font-display text-lg font-bold text-ink">
+              Dépôt possible partout en France
+            </h3>
+            <p className="mt-1 text-sm text-muted">
+              Grâce à nos partenaires <span className="font-semibold text-ink">La Poste</span> et{" "}
+              <span className="font-semibold text-ink">Mondial Relay</span>, déposez votre colis
+              dans des milliers de bureaux de poste et points relais près de chez vous.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ============ How it works ============ */}
       <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
         <div className="mx-auto max-w-xl text-center">
@@ -193,7 +212,7 @@ export default function HomePage() {
                 <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-light text-brand transition group-hover:bg-brand group-hover:text-white">
                   <s.icon width={26} height={26} />
                 </span>
-                <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[11px] font-extrabold text-[#06301f]">
+                <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[11px] font-extrabold text-[#07234a]">
                   {i + 1}
                 </span>
               </div>
@@ -229,7 +248,7 @@ export default function HomePage() {
                     }`}
                   >
                     {popular && (
-                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#06301f]">
+                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#07234a]">
                         Populaire
                       </span>
                     )}
@@ -283,39 +302,41 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ============ Reviews ============ */}
-      <section className="border-y border-line bg-card">
-        <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <div className="mx-auto max-w-xl text-center">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Avis</p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-              Apprécié des deux côtés du voyage
-            </h2>
+      {/* ============ Reviews (hidden until real testimonials — FEATURES.reviews) ============ */}
+      {FEATURES.reviews && (
+        <section className="border-y border-line bg-card">
+          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
+            <div className="mx-auto max-w-xl text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Avis</p>
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+                Apprécié des deux côtés du voyage
+              </h2>
+            </div>
+            <div className="mt-12 grid gap-4 sm:grid-cols-3">
+              {REVIEWS.map((r) => (
+                <figure
+                  key={r.name}
+                  className="flex flex-col rounded-3xl border border-line bg-background p-6 shadow-soft"
+                >
+                  <Stars />
+                  <blockquote className="mt-4 flex-1 text-[15px] leading-relaxed text-ink">
+                    “{r.text}”
+                  </blockquote>
+                  <figcaption className="mt-5 flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
+                      {r.name[0]}
+                    </span>
+                    <span>
+                      <span className="block text-sm font-bold text-ink">{r.name}</span>
+                      <span className="block text-xs text-muted">{r.city}</span>
+                    </span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
           </div>
-          <div className="mt-12 grid gap-4 sm:grid-cols-3">
-            {REVIEWS.map((r) => (
-              <figure
-                key={r.name}
-                className="flex flex-col rounded-3xl border border-line bg-background p-6 shadow-soft"
-              >
-                <Stars />
-                <blockquote className="mt-4 flex-1 text-[15px] leading-relaxed text-ink">
-                  “{r.text}”
-                </blockquote>
-                <figcaption className="mt-5 flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
-                    {r.name[0]}
-                  </span>
-                  <span>
-                    <span className="block text-sm font-bold text-ink">{r.name}</span>
-                    <span className="block text-xs text-muted">{r.city}</span>
-                  </span>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ============ FAQ ============ */}
       <section className="mx-auto w-full max-w-3xl px-4 py-16 sm:px-6 sm:py-24">
@@ -342,9 +363,9 @@ export default function HomePage() {
 
       {/* ============ Final CTA ============ */}
       <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-[#06301f] p-10 text-center text-white sm:p-16">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-[#07234a] p-10 text-center text-white sm:p-16">
           <div className="pointer-events-none absolute inset-0" aria-hidden>
-            <div className="absolute -top-24 left-1/2 h-72 w-[640px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(11,132,87,0.9),transparent)]" />
+            <div className="absolute -top-24 left-1/2 h-72 w-[640px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(21,101,216,0.9),transparent)]" />
             <div className="absolute -right-16 -bottom-16 h-56 w-56 rounded-full bg-[radial-gradient(closest-side,rgba(245,180,24,0.25),transparent)]" />
           </div>
           <div className="relative">
@@ -355,7 +376,7 @@ export default function HomePage() {
               Obtenez un prix en quelques secondes — réservez en deux minutes.
             </p>
             <div className="mt-8 flex justify-center">
-              <PrimaryLink href="/book" className="!bg-accent !text-[#06301f] !h-[54px] !px-8 shadow-lift hover:!bg-amber-400">
+              <PrimaryLink href="/book" className="!bg-accent !text-[#07234a] !h-[54px] !px-8 shadow-lift hover:!bg-amber-400">
                 Envoyer un colis maintenant <ArrowRightIcon width={18} height={18} />
               </PrimaryLink>
             </div>
