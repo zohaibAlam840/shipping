@@ -5,33 +5,49 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/auth";
 import { getOrderByCode } from "@/lib/db";
+import { sendOrderCreatedEmail, sendStatusEmail } from "@/lib/email";
 import {
   HOME_COLLECTION_FEE,
-  INSURANCE_RATE,
+  volumetricWeight,
+  chargeableWeight,
+  bandForWeight,
   type Country,
   type DeliveryOption,
   type Order,
   type OrderStatus,
+  type ParcelCategory,
   type PaymentStatus,
-  type WeightBand,
 } from "@/lib/data";
 
 export interface CreateOrderInput {
   origin: Country;
   destination: Country;
-  band: WeightBand;
   delivery: DeliveryOption;
-  insurance: boolean;
+  category?: ParcelCategory;
   recipient: { name: string; phone: string; address: string };
-  parcel: { weight: number; description: string; declaredValue: number; dimensions: string };
+  parcel: {
+    actualWeight: number;
+    length: number;
+    width: number;
+    height: number;
+    description: string;
+    declaredValue: number;
+  };
   dropoffPoint?: string;
 }
 
 export async function createOrder(input: CreateOrderInput) {
   const user = await getSessionUser();
-  if (!user) return { error: "Please log in to book a shipment." };
+  if (!user) return { error: "Veuillez vous connecter pour réserver un envoi." };
 
   const db = supabaseAdmin();
+
+  // Compute the chargeable weight server-side, then derive the pricing band —
+  // so the price can't be tampered with from the client.
+  const volumetric = volumetricWeight(input.parcel.length, input.parcel.width, input.parcel.height);
+  const chargeable = chargeableWeight(input.parcel.actualWeight, volumetric);
+  const band = bandForWeight(chargeable);
+  const dimensions = `${input.parcel.length}×${input.parcel.width}×${input.parcel.height} cm`;
 
   // Authoritative price from the DB, not from the client.
   const { data: rule, error: ruleErr } = await db
@@ -39,13 +55,11 @@ export async function createOrder(input: CreateOrderInput) {
     .select("base_price")
     .eq("origin", input.origin)
     .eq("destination", input.destination)
-    .eq("band", input.band)
+    .eq("band", band)
     .single();
-  if (ruleErr || !rule) return { error: "No price found for this route." };
+  if (ruleErr || !rule) return { error: "Aucun tarif trouvé pour ce trajet." };
 
-  const optionsFee =
-    (input.delivery === "Home collection" ? HOME_COLLECTION_FEE : 0) +
-    (input.insurance ? Math.round(input.parcel.declaredValue * INSURANCE_RATE * 100) / 100 : 0);
+  const optionsFee = input.delivery === "Home collection" ? HOME_COLLECTION_FEE : 0;
   const total = Math.round((Number(rule.base_price) + optionsFee) * 100) / 100;
 
   // Sequential YonelMa parcel reference: YNM-2026-0001, 0002, …
@@ -65,9 +79,10 @@ export async function createOrder(input: CreateOrderInput) {
     : 1;
 
   // Retry on the (unlikely) chance of a concurrent collision.
-  // Include the drop-off point if the column exists; gracefully fall back if
-  // the `dropoff_point` column hasn't been added to the table yet.
-  let includeDropoff = Boolean(input.dropoffPoint);
+  // Optional columns (dropoff_point, parcel_category, chargeable_weight) are
+  // included only if present; we gracefully fall back if they haven't been
+  // added to the table yet (see supabase/migration-extra-columns.sql).
+  let includeExtras = true;
 
   for (let attempt = 0; attempt < 6; attempt++) {
     const reference = `${prefix}${String(seq).padStart(4, "0")}`;
@@ -78,19 +93,23 @@ export async function createOrder(input: CreateOrderInput) {
       customer_email: user.email,
       origin: input.origin,
       destination: input.destination,
-      band: input.band,
+      band,
       delivery: input.delivery,
-      insurance: input.insurance,
+      insurance: false,
       recipient_name: input.recipient.name,
       recipient_phone: input.recipient.phone,
       recipient_address: input.recipient.address,
-      parcel_weight: input.parcel.weight,
+      parcel_weight: input.parcel.actualWeight,
       parcel_description: input.parcel.description,
       parcel_declared_value: input.parcel.declaredValue,
-      parcel_dimensions: input.parcel.dimensions,
+      parcel_dimensions: dimensions,
       total,
     };
-    if (includeDropoff) row.dropoff_point = input.dropoffPoint;
+    if (includeExtras) {
+      if (input.dropoffPoint) row.dropoff_point = input.dropoffPoint;
+      if (input.category) row.parcel_category = input.category;
+      row.chargeable_weight = chargeable;
+    }
 
     const { data: created, error } = await db
       .from("orders")
@@ -101,9 +120,10 @@ export async function createOrder(input: CreateOrderInput) {
     if (!error && created) {
       await db.from("status_log").insert({
         order_id: created.id,
-        status: "Pending Confirmation",
+        status: "Order Created",
         by_who: user.name,
       });
+      void sendOrderCreatedEmail(user.email, user.name, reference);
       revalidatePath("/dashboard");
       revalidatePath("/shipments");
       revalidatePath("/admin");
@@ -119,9 +139,13 @@ export async function createOrder(input: CreateOrderInput) {
       seq++;
       continue;
     }
-    // `dropoff_point` column not added yet → retry without it (same number).
-    if (error && (error.code === "PGRST204" || /dropoff_point/.test(error.message))) {
-      includeDropoff = false;
+    // Optional column not added yet → retry without the extras (same number).
+    if (
+      error &&
+      (error.code === "PGRST204" ||
+        /dropoff_point|parcel_category|chargeable_weight/.test(error.message))
+    ) {
+      includeExtras = false;
       continue;
     }
     if (error) return { error: error.message };
@@ -141,7 +165,7 @@ export async function updateOrderAdmin(
   const db = supabaseAdmin();
   const { data: before, error: readErr } = await db
     .from("orders")
-    .select("status")
+    .select("status, customer_email, customer_name, order_number")
     .eq("id", id)
     .single();
   if (readErr) return { error: readErr.message };
@@ -164,6 +188,9 @@ export async function updateOrderAdmin(
       note: patch.note || null,
     });
   }
+  if (before.status !== patch.status) {
+    void sendStatusEmail(before.customer_email, before.customer_name, before.order_number, patch.status);
+  }
   revalidatePath("/admin");
   revalidatePath(`/admin/orders/${id}`);
   revalidatePath(`/shipments/${id}`);
@@ -175,6 +202,12 @@ export async function advanceStatus(id: string, next: OrderStatus, by: string) {
   const { error } = await db.from("orders").update({ status: next }).eq("id", id);
   if (error) return { error: error.message };
   await db.from("status_log").insert({ order_id: id, status: next, by_who: by });
+  const { data: o } = await db
+    .from("orders")
+    .select("customer_email, customer_name, order_number")
+    .eq("id", id)
+    .single();
+  if (o) void sendStatusEmail(o.customer_email, o.customer_name, o.order_number, next);
   revalidatePath("/partner");
   revalidatePath(`/partner/orders/${id}`);
   revalidatePath(`/shipments/${id}`);

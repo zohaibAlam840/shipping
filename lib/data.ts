@@ -5,19 +5,35 @@ export type WeightBand = "0-1kg" | "1-3kg" | "3-7kg" | "7-15kg" | "15-25kg";
 export type Country = "France" | "Senegal";
 export type DeliveryOption = "Relay point" | "Post office" | "Home collection";
 
+// Operational workflow (canonical English keys, French shown via STATUS_FR).
 export const STATUSES = [
-  "Pending Confirmation",
-  "Parcel Received",
-  "Processing",
-  "Shipped from France",
-  "In Transit",
-  "Arrived in Senegal",
+  "Order Created",
+  "Payment Received",
+  "Awaiting E-Logik",
+  "Received by E-Logik",
+  "Pallet Preparation",
+  "Collected by TAF",
+  "In Air Transit",
+  "Arrived in Dakar",
+  "Customs Clearance",
   "Out for Delivery",
   "Delivered",
 ] as const;
 export type OrderStatus = (typeof STATUSES)[number];
 
 export type PaymentStatus = "Unpaid" | "Paid" | "Refunded";
+
+export type ParcelCategory = "General Cargo" | "Perishable Goods" | "Regulated / DGR";
+export const PARCEL_CATEGORIES: ParcelCategory[] = [
+  "General Cargo",
+  "Perishable Goods",
+  "Regulated / DGR",
+];
+export const PARCEL_CATEGORY_FR: Record<ParcelCategory, string> = {
+  "General Cargo": "Marchandise générale",
+  "Perishable Goods": "Denrées périssables",
+  "Regulated / DGR": "Marchandises réglementées / DGR",
+};
 
 export interface PricingRule {
   origin: Country;
@@ -56,9 +72,29 @@ export const FEATURES = {
   reviews: false, // customer testimonials hidden until we have real ones
 };
 
-export const HOME_COLLECTION_FEE = 18;
-export const INSURANCE_RATE = 0.04; // 4% of declared value
+export const HOME_COLLECTION_FEE = 20; // "Collecte à domicile"
 export const TAX_RATE = 0.0; // VAT handled later
+export const VOLUMETRIC_DIVISOR = 6000; // (L×W×H cm) / 6000 = volumetric kg
+
+/** Volumetric weight in kg from dimensions in centimetres. */
+export function volumetricWeight(lengthCm: number, widthCm: number, heightCm: number) {
+  if (!lengthCm || !widthCm || !heightCm) return 0;
+  return Math.round(((lengthCm * widthCm * heightCm) / VOLUMETRIC_DIVISOR) * 100) / 100;
+}
+
+/** Chargeable weight = greater of actual and volumetric weight. */
+export function chargeableWeight(actualKg: number, volumetricKg: number) {
+  return Math.max(actualKg || 0, volumetricKg || 0);
+}
+
+/** Maps a chargeable weight (kg) to its pricing band. */
+export function bandForWeight(kg: number): WeightBand {
+  if (kg <= 1) return "0-1kg";
+  if (kg <= 3) return "1-3kg";
+  if (kg <= 7) return "3-7kg";
+  if (kg <= 15) return "7-15kg";
+  return "15-25kg";
+}
 
 export function findRule(origin: Country, destination: Country, band: WeightBand) {
   return PRICING_RULES.find(
@@ -71,14 +107,10 @@ export function quote(opts: {
   destination: Country;
   band: WeightBand;
   homeCollection: boolean;
-  insurance: boolean;
-  declaredValue: number;
 }) {
   const rule = findRule(opts.origin, opts.destination, opts.band);
   if (!rule) return null;
-  const optionsFee =
-    (opts.homeCollection ? HOME_COLLECTION_FEE : 0) +
-    (opts.insurance ? Math.round(opts.declaredValue * INSURANCE_RATE * 100) / 100 : 0);
+  const optionsFee = opts.homeCollection ? HOME_COLLECTION_FEE : 0;
   const tax = Math.round((rule.basePrice + optionsFee) * TAX_RATE * 100) / 100;
   return {
     basePrice: rule.basePrice,
@@ -107,8 +139,10 @@ export interface Order {
   band: WeightBand;
   delivery: DeliveryOption;
   insurance: boolean;
+  category?: ParcelCategory | null;
   recipient: { name: string; phone: string; address: string };
   parcel: { weightKg: number; description: string; declaredValue: number; dimensions: string };
+  chargeableWeightKg?: number | null;
   dropoffPoint?: string | null; // chosen La Poste office / Mondial Relay point
   total: number;
   status: OrderStatus;
@@ -180,12 +214,15 @@ export function statusIndex(s: OrderStatus) {
 // database; these maps translate them for display only, so no data migration
 // is needed and the timeline/styling logic keeps working.
 export const STATUS_FR: Record<OrderStatus | "Incident reported", string> = {
-  "Pending Confirmation": "En attente de confirmation",
-  "Parcel Received": "Colis reçu",
-  Processing: "En traitement",
-  "Shipped from France": "Expédié de France",
-  "In Transit": "En transit",
-  "Arrived in Senegal": "Arrivé au Sénégal",
+  "Order Created": "Commande créée",
+  "Payment Received": "Paiement reçu",
+  "Awaiting E-Logik": "En attente de réception E-Logik",
+  "Received by E-Logik": "Reçu par E-Logik",
+  "Pallet Preparation": "Préparation de la palette",
+  "Collected by TAF": "Collecté par TAF",
+  "In Air Transit": "En transit aérien",
+  "Arrived in Dakar": "Arrivé à Dakar",
+  "Customs Clearance": "Dédouanement (PAPS)",
   "Out for Delivery": "En cours de livraison",
   Delivered: "Livré",
   "Incident reported": "Incident signalé",
@@ -200,7 +237,7 @@ export const PAYMENT_FR: Record<PaymentStatus, string> = {
 export const DELIVERY_FR: Record<DeliveryOption, string> = {
   "Relay point": "Point relais",
   "Post office": "Bureau de poste",
-  "Home collection": "Enlèvement à domicile",
+  "Home collection": "Collecte à domicile",
 };
 
 export const CLAIM_TYPE_FR: Record<string, string> = {

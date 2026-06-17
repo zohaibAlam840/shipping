@@ -2,7 +2,7 @@
 // Lists every active (not yet delivered) parcel with logistics columns.
 import { getOrders } from "@/lib/db";
 import { toCsv, csvResponse, stamp } from "@/lib/csv";
-import { COUNTRY_FR, DELIVERY_FR, STATUS_FR, fmtDate } from "@/lib/data";
+import { COUNTRY_FR, DELIVERY_FR, STATUS_FR, PARCEL_CATEGORY_FR, fmtDate } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,8 @@ export async function GET() {
     "Téléphone",
     "Adresse de livraison",
     "Pays",
-    "Poids (kg)",
+    "Catégorie",
+    "Poids facturable (kg)",
     "Dimensions",
     "Contenu",
     "Valeur déclarée (€)",
@@ -35,7 +36,8 @@ export async function GET() {
     o.recipient.phone,
     o.recipient.address,
     COUNTRY_FR[o.destination],
-    o.parcel.weightKg,
+    o.category ? PARCEL_CATEGORY_FR[o.category] : "",
+    o.chargeableWeightKg ?? o.parcel.weightKg,
     o.parcel.dimensions,
     o.parcel.description,
     o.parcel.declaredValue,

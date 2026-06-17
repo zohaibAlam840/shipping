@@ -2,6 +2,7 @@
 // Configure the endpoint URL + signing secret in the Stripe dashboard.
 import { stripe, isStripeConfigured } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase";
+import { sendStatusEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +29,23 @@ export async function POST(req: Request) {
     const session = event.data.object as { metadata?: { order_id?: string } };
     const orderId = session.metadata?.order_id;
     if (orderId) {
-      await supabaseAdmin().from("orders").update({ payment: "Paid" }).eq("id", orderId);
+      const db = supabaseAdmin();
+      await db.from("orders").update({ payment: "Paid" }).eq("id", orderId);
+      // Advance the workflow to "Payment Received" if still at the start.
+      const { data: o } = await db
+        .from("orders")
+        .select("status, customer_email, customer_name, order_number")
+        .eq("id", orderId)
+        .single();
+      if (o?.status === "Order Created") {
+        await db.from("orders").update({ status: "Payment Received" }).eq("id", orderId);
+        await db.from("status_log").insert({
+          order_id: orderId,
+          status: "Payment Received",
+          by_who: "Paiement Stripe",
+        });
+        void sendStatusEmail(o.customer_email, o.customer_name, o.order_number, "Payment Received");
+      }
     }
   }
 

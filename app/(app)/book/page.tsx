@@ -5,17 +5,19 @@
 import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import {
-  quote,
   eur,
   COUNTRY_FR,
   DELIVERY_FR,
   MONDIAL_RELAY_POINTS,
   LAPOSTE_OFFICES,
+  PARCEL_CATEGORIES,
+  PARCEL_CATEGORY_FR,
   type DeliveryOption,
+  type ParcelCategory,
 } from "@/lib/data";
 import { createOrder } from "@/app/actions";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
-import { Calculator, DEFAULT_CALC, type CalcState } from "@/components/calculator";
+import { Calculator, DEFAULT_CALC, computeQuote, type CalcState } from "@/components/calculator";
 import { Card, PageTitle, Field, inputCls } from "@/components/ui";
 import { PayButton } from "@/components/pay-button";
 import { ArrowRightIcon, CheckIcon, PinIcon, TruckIcon, HomeIcon } from "@/components/icons";
@@ -28,7 +30,8 @@ const OTHER = "__other__";
 interface BookingState {
   calc: CalcState;
   recipient: { name: string; phone: string; address: string };
-  parcel: { weight: string; description: string; declaredValue: string; dimensions: string };
+  parcel: { description: string; declaredValue: string };
+  category: ParcelCategory;
   delivery: DeliveryOption;
   dropoffPoint: string;
 }
@@ -36,7 +39,7 @@ interface BookingState {
 const DELIVERY_OPTIONS: { value: DeliveryOption; icon: typeof PinIcon; text: string; fee: string }[] = [
   { value: "Relay point", icon: PinIcon, text: "Déposez dans un commerce partenaire près de chez vous", fee: "Gratuit" },
   { value: "Post office", icon: TruckIcon, text: "Déposez dans un bureau de poste partenaire", fee: "Gratuit" },
-  { value: "Home collection", icon: HomeIcon, text: "Nous récupérons le colis chez vous", fee: "+18 €" },
+  { value: "Home collection", icon: HomeIcon, text: "Nous récupérons le colis chez vous", fee: "+20 €" },
 ];
 
 export default function BookPage() {
@@ -50,7 +53,8 @@ export default function BookPage() {
   const [b, setB] = useState<BookingState>({
     calc: DEFAULT_CALC,
     recipient: { name: "", phone: "", address: "" },
-    parcel: { weight: "", description: "", declaredValue: "", dimensions: "" },
+    parcel: { description: "", declaredValue: "" },
+    category: "General Cargo",
     delivery: "Relay point",
     dropoffPoint: "",
   });
@@ -74,10 +78,14 @@ export default function BookPage() {
       });
   }, []);
 
-  const q = quote({ ...b.calc, homeCollection: b.delivery === "Home collection" });
+  const { chargeable, band, q } = computeQuote({
+    ...b.calc,
+    homeCollection: b.delivery === "Home collection",
+  });
 
   const detailsValid =
-    b.recipient.name && b.recipient.phone && b.recipient.address && b.parcel.weight && b.parcel.description;
+    b.recipient.name && b.recipient.phone && b.recipient.address && b.parcel.description;
+  const parcelValid = b.calc.actualWeight > 0 && b.calc.length > 0 && b.calc.width > 0 && b.calc.height > 0;
 
   function confirm() {
     setError(null);
@@ -85,15 +93,16 @@ export default function BookPage() {
       const res = await createOrder({
         origin: b.calc.origin,
         destination: b.calc.destination,
-        band: b.calc.band,
         delivery: b.delivery,
-        insurance: b.calc.insurance,
+        category: b.category,
         recipient: b.recipient,
         parcel: {
-          weight: Number(b.parcel.weight) || 0,
+          actualWeight: b.calc.actualWeight,
+          length: b.calc.length,
+          width: b.calc.width,
+          height: b.calc.height,
           description: b.parcel.description,
           declaredValue: Number(b.parcel.declaredValue) || 0,
-          dimensions: b.parcel.dimensions,
         },
         dropoffPoint: needsDropoff ? b.dropoffPoint : undefined,
       });
@@ -119,7 +128,7 @@ export default function BookPage() {
           <p className="text-sm text-muted">Total à payer au dépôt</p>
           <p className="text-3xl font-bold text-brand">{q ? eur(q.total) : "—"}</p>
           <p className="text-xs text-muted mt-1">
-            {COUNTRY_FR[b.calc.origin]} → {COUNTRY_FR[b.calc.destination]} · {b.calc.band} · {DELIVERY_FR[b.delivery]}
+            {COUNTRY_FR[b.calc.origin]} → {COUNTRY_FR[b.calc.destination]} · {band} · {DELIVERY_FR[b.delivery]}
           </p>
           <p className="text-xs text-muted mt-1">
             Numéro de suivi{" "}
@@ -194,35 +203,27 @@ export default function BookPage() {
             </div>
             <div>
               <h2 className="font-bold text-ink mb-3">Colis</h2>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Poids (kg)">
-                  <input
-                    type="number"
+              <div className="space-y-3">
+                <Field label="Catégorie du colis">
+                  <select
                     className={inputCls}
-                    placeholder="2.5"
-                    value={b.parcel.weight}
-                    onChange={(e) => setB({ ...b, parcel: { ...b.parcel, weight: e.target.value } })}
-                  />
+                    value={b.category}
+                    onChange={(e) => setB({ ...b, category: e.target.value as ParcelCategory })}
+                  >
+                    {PARCEL_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>{PARCEL_CATEGORY_FR[c]}</option>
+                    ))}
+                  </select>
                 </Field>
-                <Field label="Dimensions">
-                  <input
-                    className={inputCls}
-                    placeholder="40×30×20 cm"
-                    value={b.parcel.dimensions}
-                    onChange={(e) => setB({ ...b, parcel: { ...b.parcel, dimensions: e.target.value } })}
-                  />
-                </Field>
-              </div>
-              <div className="mt-3 space-y-3">
                 <Field label="Que contient le colis ?">
                   <input
                     className={inputCls}
-                    placeholder="Vêtements, nourriture, documents…"
+                    placeholder="Vêtements, chaussures, documents…"
                     value={b.parcel.description}
                     onChange={(e) => setB({ ...b, parcel: { ...b.parcel, description: e.target.value } })}
                   />
                 </Field>
-                <Field label="Valeur déclarée (€)" hint="Utilisée pour l'assurance et la douane.">
+                <Field label="Valeur déclarée (€)" hint="Utilisée pour les formalités douanières.">
                   <input
                     type="number"
                     className={inputCls}
@@ -231,6 +232,9 @@ export default function BookPage() {
                     onChange={(e) => setB({ ...b, parcel: { ...b.parcel, declaredValue: e.target.value } })}
                   />
                 </Field>
+                <p className="text-xs text-muted">
+                  Poids et dimensions sont renseignés à l&apos;étape Devis (poids facturable {chargeable} kg).
+                </p>
               </div>
             </div>
           </div>
@@ -308,14 +312,14 @@ export default function BookPage() {
             <dl className="space-y-2.5 text-sm">
               {[
                 ["Trajet", `${COUNTRY_FR[b.calc.origin]} → ${COUNTRY_FR[b.calc.destination]}`],
-                ["Tranche de poids", b.calc.band],
+                ["Poids facturable", `${chargeable} kg · tranche ${band}`],
+                ["Catégorie", PARCEL_CATEGORY_FR[b.category]],
                 ["Expéditeur", `${sender.name}${sender.phone ? ` · ${sender.phone}` : ""}`],
                 ["Destinataire", `${b.recipient.name} · ${b.recipient.phone}`],
                 ["Livrer à", b.recipient.address],
                 ["Contenu", b.parcel.description],
                 ["Dépôt", DELIVERY_FR[b.delivery]],
                 ...(needsDropoff && b.dropoffPoint ? [["Point de dépôt", b.dropoffPoint] as const] : []),
-                ["Assurance", b.calc.insurance ? `Oui (valeur ${eur(Number(b.parcel.declaredValue) || b.calc.declaredValue)})` : "Non"],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4">
                   <dt className="text-muted shrink-0">{k}</dt>
@@ -353,7 +357,7 @@ export default function BookPage() {
         {step < STEPS.length - 1 ? (
           <button
             type="button"
-            disabled={(step === 1 && !detailsValid) || (step === 2 && !dropoffValid)}
+            disabled={(step === 0 && !parcelValid) || (step === 1 && !detailsValid) || (step === 2 && !dropoffValid)}
             onClick={() => setStep(step + 1)}
             className="h-12 flex-1 rounded-full bg-brand font-semibold text-white hover:bg-brand-dark active:scale-[0.98] transition disabled:opacity-40 disabled:pointer-events-none inline-flex items-center justify-center gap-2"
           >

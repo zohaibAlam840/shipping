@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PARTNERS, eur, fmtDate, COUNTRY_FR, type Order } from "@/lib/data";
+import { PARTNERS, STATUSES, STATUS_FR, eur, fmtDate, COUNTRY_FR, type Order } from "@/lib/data";
 import { getOrders, getClaims, getCustomers } from "@/lib/db";
 import { Card, PageTitle, StatusBadge, PaymentBadge } from "@/components/ui";
 import { Donut, BarChart, HBars } from "@/components/charts";
@@ -17,11 +17,18 @@ import {
 export const metadata = { title: "Admin" };
 export const dynamic = "force-dynamic";
 
-const PREP_STATUSES = ["Pending Confirmation", "Parcel Received", "Processing"];
+const PREP_STATUSES = [
+  "Order Created",
+  "Payment Received",
+  "Awaiting E-Logik",
+  "Received by E-Logik",
+  "Pallet Preparation",
+];
 const TRANSIT_STATUSES = [
-  "Shipped from France",
-  "In Transit",
-  "Arrived in Senegal",
+  "Collected by TAF",
+  "In Air Transit",
+  "Arrived in Dakar",
+  "Customs Clearance",
   "Out for Delivery",
 ];
 
@@ -62,8 +69,27 @@ export default async function AdminPage() {
   const inTransit = orders.filter((o) => TRANSIT_STATUSES.includes(o.status));
   const incidents = orders.filter((o) => o.incident);
   const openClaims = claims.filter((c) => c.status === "Open" || c.status === "Investigating");
-  const attention = orders.filter((o) => o.status === "Pending Confirmation" || o.incident);
+  const attention = orders.filter((o) => o.status === "Order Created" || o.incident);
   const deliveryRate = orders.length ? Math.round((delivered.length / orders.length) * 100) : 0;
+
+  // Operational indicators.
+  const now = new Date();
+  const monthlyRevenue = paid
+    .filter((o) => {
+      const d = new Date(o.date);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    })
+    .reduce((s, o) => s + o.total, 0);
+  const upcomingWeight = active.reduce(
+    (s, o) => s + (o.chargeableWeightKg ?? o.parcel.weightKg ?? 0),
+    0,
+  );
+  const activeCustomers = new Set(active.map((o) => o.customerEmail)).size;
+  // Count per workflow stage for the pipeline panel.
+  const stageCounts = STATUSES.map((s) => ({
+    status: s,
+    count: orders.filter((o) => o.status === s).length,
+  }));
 
   // Status phase donut.
   const prep = orders.filter((o) => PREP_STATUSES.includes(o.status)).length;
@@ -96,6 +122,26 @@ export default async function AdminPage() {
         <KpiCard label="Livrées" value={String(delivered.length)} sub={`${deliveryRate} % de livraison`} icon={<CheckIcon width={18} height={18} />} tone="emerald" />
         <KpiCard label="Réclamations ouvertes" value={String(openClaims.length)} sub={`${incidents.length} incident(s)`} icon={<AlertIcon width={18} height={18} />} tone="amber" />
       </div>
+
+      {/* Operational indicators */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <KpiCard label="CA du mois" value={eur(monthlyRevenue)} sub="commandes payées ce mois" icon={<ChartIcon width={18} height={18} />} tone="brand" />
+        <KpiCard label="Poids à expédier" value={`${Math.round(upcomingWeight * 10) / 10} kg`} sub="colis non encore livrés" icon={<BoxIcon width={18} height={18} />} tone="indigo" />
+        <KpiCard label="Clients actifs" value={String(activeCustomers)} sub={`${customers.length} clients au total`} icon={<UsersIcon width={18} height={18} />} tone="emerald" />
+      </div>
+
+      {/* Operational pipeline */}
+      <Card className="p-5">
+        <h2 className="font-display font-bold text-ink mb-4">Pipeline opérationnel</h2>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 sm:grid-cols-3">
+          {stageCounts.map((s) => (
+            <div key={s.status} className="flex items-center justify-between gap-3 border-b border-line/70 pb-2">
+              <span className="text-sm text-muted">{STATUS_FR[s.status]}</span>
+              <span className={`text-sm font-bold ${s.count ? "text-ink" : "text-muted/50"}`}>{s.count}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Analytics */}
       <div className="grid gap-4 lg:grid-cols-3">

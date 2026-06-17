@@ -70,12 +70,15 @@ export function Stat({
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  "Pending Confirmation": "bg-amber-50 text-amber-700 border-amber-200",
-  "Parcel Received": "bg-sky-50 text-sky-700 border-sky-200",
-  Processing: "bg-sky-50 text-sky-700 border-sky-200",
-  "Shipped from France": "bg-indigo-50 text-indigo-700 border-indigo-200",
-  "In Transit": "bg-indigo-50 text-indigo-700 border-indigo-200",
-  "Arrived in Senegal": "bg-teal-50 text-teal-700 border-teal-200",
+  "Order Created": "bg-amber-50 text-amber-700 border-amber-200",
+  "Payment Received": "bg-sky-50 text-sky-700 border-sky-200",
+  "Awaiting E-Logik": "bg-sky-50 text-sky-700 border-sky-200",
+  "Received by E-Logik": "bg-sky-50 text-sky-700 border-sky-200",
+  "Pallet Preparation": "bg-indigo-50 text-indigo-700 border-indigo-200",
+  "Collected by TAF": "bg-indigo-50 text-indigo-700 border-indigo-200",
+  "In Air Transit": "bg-indigo-50 text-indigo-700 border-indigo-200",
+  "Arrived in Dakar": "bg-teal-50 text-teal-700 border-teal-200",
+  "Customs Clearance": "bg-teal-50 text-teal-700 border-teal-200",
   "Out for Delivery": "bg-teal-50 text-teal-700 border-teal-200",
   Delivered: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };

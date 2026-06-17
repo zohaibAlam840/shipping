@@ -47,7 +47,7 @@ export default function MarketingLayout({
 
       <main className="flex-1">{children}</main>
 
-      <footer className="border-t border-line bg-[#07234a] text-white">
+      <footer className="border-t border-line bg-[#06301f] text-white">
         <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:grid-cols-3 sm:px-6">
           <div>
             <div className="mb-4 flex items-center gap-2.5">

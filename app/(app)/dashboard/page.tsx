@@ -29,11 +29,18 @@ import {
 export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-const PREP_STATUSES = ["Pending Confirmation", "Parcel Received", "Processing"];
+const PREP_STATUSES = [
+  "Order Created",
+  "Payment Received",
+  "Awaiting E-Logik",
+  "Received by E-Logik",
+  "Pallet Preparation",
+];
 const TRANSIT_STATUSES = [
-  "Shipped from France",
-  "In Transit",
-  "Arrived in Senegal",
+  "Collected by TAF",
+  "In Air Transit",
+  "Arrived in Dakar",
+  "Customs Clearance",
   "Out for Delivery",
 ];
 
@@ -135,8 +142,8 @@ export default async function DashboardPage() {
       {/* ---- Active shipment focus ---- */}
       {focus && (
         <Link href={`/shipments/${focus.id}`} className="block group">
-          <div className="relative overflow-hidden rounded-3xl bg-[#07234a] p-5 text-white shadow-lift transition group-hover:-translate-y-0.5 sm:p-6">
-            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[radial-gradient(closest-side,rgba(21,101,216,0.85),transparent)]" aria-hidden />
+          <div className="relative overflow-hidden rounded-3xl bg-[#06301f] p-5 text-white shadow-lift transition group-hover:-translate-y-0.5 sm:p-6">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[radial-gradient(closest-side,rgba(11,132,87,0.85),transparent)]" aria-hidden />
             <div className="relative">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/70">

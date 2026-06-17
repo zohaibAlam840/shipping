@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eur, fmtDate, COUNTRY_FR, DELIVERY_FR } from "@/lib/data";
+import { eur, fmtDate, COUNTRY_FR, DELIVERY_FR, PARCEL_CATEGORY_FR } from "@/lib/data";
 import { getOrderById } from "@/lib/db";
 import { Card, PageTitle, StatusBadge, PaymentBadge, Timeline } from "@/components/ui";
 import { ManageOrderForm } from "./manage-form";
@@ -43,7 +43,11 @@ export default async function AdminOrderDetail({
             <h2 className="font-bold text-ink mb-3">Envoi</h2>
             <dl className="space-y-2 text-sm">
               <div><dt className="text-muted text-xs">Trajet</dt><dd className="font-semibold text-ink">{COUNTRY_FR[order.origin]} → {COUNTRY_FR[order.destination]} · {order.band}</dd></div>
-              <div><dt className="text-muted text-xs">Contenu</dt><dd className="font-semibold text-ink">{order.parcel.description} · {order.parcel.weightKg} kg</dd></div>
+              {order.category && (
+                <div><dt className="text-muted text-xs">Catégorie</dt><dd className="font-semibold text-ink">{PARCEL_CATEGORY_FR[order.category]}</dd></div>
+              )}
+              <div><dt className="text-muted text-xs">Contenu</dt><dd className="font-semibold text-ink">{order.parcel.description}</dd></div>
+              <div><dt className="text-muted text-xs">Poids facturable</dt><dd className="font-semibold text-ink">{order.chargeableWeightKg ?? order.parcel.weightKg} kg · {order.parcel.dimensions}</dd></div>
               <div><dt className="text-muted text-xs">Destinataire</dt><dd className="font-semibold text-ink">{order.recipient.name} · {order.recipient.phone}</dd></div>
               <div><dt className="text-muted text-xs">Adresse</dt><dd className="font-semibold text-ink">{order.recipient.address}</dd></div>
               <div><dt className="text-muted text-xs">Option de livraison</dt><dd className="font-semibold text-ink">{DELIVERY_FR[order.delivery]}</dd></div>

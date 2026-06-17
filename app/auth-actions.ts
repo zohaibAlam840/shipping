@@ -77,6 +77,24 @@ export async function logoutCustomer() {
   redirect("/login");
 }
 
+export async function requestPasswordReset(
+  _prev: { error?: string; info?: string } | null,
+  formData: FormData,
+) {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) return { error: "Saisissez votre adresse e-mail." };
+
+  const supabase = await createSupabaseServer();
+  const site = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${site}/reset-password`,
+  });
+  if (error) return { error: frError(error.message) };
+  return {
+    info: "Si un compte existe pour cet e-mail, un lien de réinitialisation vient d'être envoyé.",
+  };
+}
+
 export async function updateProfile(
   _prev: { error?: string; ok?: boolean } | null,
   formData: FormData,

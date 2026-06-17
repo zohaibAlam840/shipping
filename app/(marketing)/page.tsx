@@ -16,7 +16,7 @@ import {
 const STEPS = [
   { icon: BoxIcon, title: "Obtenez un prix", text: "Choisissez le poids — le prix et le délai de livraison s'affichent instantanément." },
   { icon: ClipboardIcon, title: "Réservez en ligne", text: "Ajoutez le destinataire et les détails du colis en deux minutes, depuis votre téléphone." },
-  { icon: TruckIcon, title: "Dépôt ou enlèvement", text: "Déposez-le dans un point relais ou faites-le récupérer chez vous." },
+  { icon: TruckIcon, title: "Dépôt ou collecte", text: "Déposez-le dans un point relais / bureau de poste ou faites-le collecter chez vous." },
   { icon: PlaneIcon, title: "Suivi jusqu'à la porte", text: "Suivez chaque étape de Paris à Dakar jusqu'à la livraison." },
 ];
 
@@ -27,15 +27,27 @@ const FAQS = [
   },
   {
     q: "Que puis-je envoyer ?",
-    a: "Vêtements, nourriture (non périssable), électronique, documents, médicaments et plus encore. Les articles interdits suivent les règles douanières françaises et sénégalaises.",
+    a: "Vêtements, chaussures, documents, produits électroniques, cadeaux et produits non périssables. Certains produits réglementés nécessitent une validation préalable.",
   },
   {
-    q: "Mon colis est-il assuré ?",
-    a: "L'assurance optionnelle couvre votre valeur déclarée pour 4 % de sa valeur. Chaque colis est suivi dans tous les cas.",
+    q: "Puis-je envoyer depuis toute la France ?",
+    a: "Oui. Vous pouvez déposer votre colis via nos partenaires ou demander une collecte à domicile selon votre localisation.",
+  },
+  {
+    q: "Le dédouanement est-il inclus ?",
+    a: "Oui. Les formalités douanières nécessaires à l'export et à l'import sont prises en charge par nos partenaires logistiques.",
   },
   {
     q: "Comment puis-je payer ?",
-    a: "Payez en ligne par carte bancaire en toute sécurité, ou au moment du dépôt / de l'enlèvement.",
+    a: "Paiement sécurisé en ligne. D'autres moyens de paiement pourront être proposés selon votre mode d'expédition.",
+  },
+  {
+    q: "Comment suivre mon colis ?",
+    a: "Un numéro de suivi est attribué à chaque expédition. Vous pouvez consulter l'état de votre colis directement depuis YonelMa.",
+  },
+  {
+    q: "Que se passe-t-il en cas de retard ?",
+    a: "Notre équipe vous informe de l'évolution de votre expédition et vous accompagne jusqu'à la livraison.",
   },
 ];
 
@@ -113,12 +125,12 @@ export default function HomePage() {
   return (
     <div>
       {/* ============ Hero ============ */}
-      <section className="relative overflow-hidden bg-[#07234a] text-white">
+      <section className="relative overflow-hidden bg-[#06301f] text-white">
         {/* layered glows */}
         <div className="pointer-events-none absolute inset-0" aria-hidden>
-          <div className="absolute -top-40 left-1/2 h-[560px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(21,101,216,0.9),transparent)]" />
+          <div className="absolute -top-40 left-1/2 h-[560px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(11,132,87,0.9),transparent)]" />
           <div className="absolute -right-32 top-24 h-96 w-96 rounded-full bg-[radial-gradient(closest-side,rgba(245,180,24,0.22),transparent)]" />
-          <div className="absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-[radial-gradient(closest-side,rgba(21,101,216,0.5),transparent)]" />
+          <div className="absolute -left-24 bottom-0 h-80 w-80 rounded-full bg-[radial-gradient(closest-side,rgba(11,132,87,0.5),transparent)]" />
           {/* dotted route line */}
           <svg className="absolute inset-x-0 bottom-10 hidden lg:block opacity-25" height="120" width="100%" preserveAspectRatio="none" viewBox="0 0 1200 120">
             <path d="M-20,90 C300,20 900,140 1220,40" fill="none" stroke="white" strokeWidth="2" strokeDasharray="2 10" strokeLinecap="round" />
@@ -140,11 +152,12 @@ export default function HomePage() {
               jusqu'au bout.
             </h1>
             <p className="anim-fade-up anim-d2 mt-5 max-w-lg text-base text-white/75 sm:text-lg">
-              Des prix honnêtes, l'enlèvement à votre porte, et un suivi en
-              temps réel pour chaque colis jusqu'aux mains de votre famille.
+              Des prix honnêtes, dépôt de colis ou collecte à domicile partout
+              en France, et un suivi en temps réel pour chaque colis jusqu'aux
+              mains de votre famille.
             </p>
             <div className="anim-fade-up anim-d3 mt-9 flex flex-col gap-3 sm:flex-row">
-              <PrimaryLink href="/book" className="!bg-accent !text-[#07234a] !h-[54px] !px-8 shadow-lift hover:!bg-amber-400">
+              <PrimaryLink href="/book" className="!bg-accent !text-[#06301f] !h-[54px] !px-8 shadow-lift hover:!bg-amber-400">
                 Envoyer un colis <ArrowRightIcon width={18} height={18} />
               </PrimaryLink>
               <GhostLink href="/track" className="!h-[54px] !px-8 !bg-white/10 !text-white !border-white/20 backdrop-blur hover:!text-white hover:!border-white/50">
@@ -195,7 +208,7 @@ export default function HomePage() {
       {/* ============ How it works ============ */}
       <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
         <div className="mx-auto max-w-xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Comment ça marche</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Comment ça marche ?</p>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
             De vos mains aux leurs, en quatre étapes
           </h2>
@@ -212,7 +225,7 @@ export default function HomePage() {
                 <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-light text-brand transition group-hover:bg-brand group-hover:text-white">
                   <s.icon width={26} height={26} />
                 </span>
-                <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[11px] font-extrabold text-[#07234a]">
+                <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[11px] font-extrabold text-[#06301f]">
                   {i + 1}
                 </span>
               </div>
@@ -248,7 +261,7 @@ export default function HomePage() {
                     }`}
                   >
                     {popular && (
-                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#07234a]">
+                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#06301f]">
                         Populaire
                       </span>
                     )}
@@ -277,15 +290,15 @@ export default function HomePage() {
       {/* ============ Why YonelMa ============ */}
       <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
         <div className="mx-auto max-w-xl text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Pourquoi YonelMa</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand">Pourquoi YonelMa ?</p>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
             Pensé pour les familles, pas pour le fret
           </h2>
         </div>
         <div className="mt-12 grid gap-4 sm:grid-cols-3">
           {[
-            { icon: ShieldIcon, title: "Assuré et sécurisé", text: "Assurance optionnelle sur la valeur déclarée et manipulation soignée dans les deux hubs." },
-            { icon: PinIcon, title: "Porte à porte", text: "Enlèvement à domicile en France, livraison à domicile ou en point relais au Sénégal." },
+            { icon: ShieldIcon, title: "Dédouanement inclus", text: "Avec nos partenaires, nous nous occupons de toutes les formalités douanières." },
+            { icon: PinIcon, title: "Porte à porte", text: "Collecte à domicile ou dépôt dans un bureau de poste / point relais partout en France, livraison à domicile au Sénégal." },
             { icon: ClockIcon, title: "Suivi en temps réel", text: "Un vrai suivi pour chaque colis — du dépôt aux mains de votre famille." },
           ].map((f) => (
             <div
@@ -363,9 +376,9 @@ export default function HomePage() {
 
       {/* ============ Final CTA ============ */}
       <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-[#07234a] p-10 text-center text-white sm:p-16">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-[#06301f] p-10 text-center text-white sm:p-16">
           <div className="pointer-events-none absolute inset-0" aria-hidden>
-            <div className="absolute -top-24 left-1/2 h-72 w-[640px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(21,101,216,0.9),transparent)]" />
+            <div className="absolute -top-24 left-1/2 h-72 w-[640px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(11,132,87,0.9),transparent)]" />
             <div className="absolute -right-16 -bottom-16 h-56 w-56 rounded-full bg-[radial-gradient(closest-side,rgba(245,180,24,0.25),transparent)]" />
           </div>
           <div className="relative">
@@ -376,12 +389,12 @@ export default function HomePage() {
               Obtenez un prix en quelques secondes — réservez en deux minutes.
             </p>
             <div className="mt-8 flex justify-center">
-              <PrimaryLink href="/book" className="!bg-accent !text-[#07234a] !h-[54px] !px-8 shadow-lift hover:!bg-amber-400">
+              <PrimaryLink href="/book" className="!bg-accent !text-[#06301f] !h-[54px] !px-8 shadow-lift hover:!bg-amber-400">
                 Envoyer un colis maintenant <ArrowRightIcon width={18} height={18} />
               </PrimaryLink>
             </div>
             <ul className="mt-7 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-medium text-white/65">
-              {["Aucun compte requis pour un devis", "Annulation gratuite avant le dépôt", "Support en FR / WO / EN"].map((t) => (
+              {["Aucun compte requis pour un devis", "Annulation gratuite avant le dépôt", "Support en Français / Wolof / Anglais"].map((t) => (
                 <li key={t} className="inline-flex items-center gap-1.5">
                   <CheckIcon width={13} height={13} className="text-accent" /> {t}
                 </li>

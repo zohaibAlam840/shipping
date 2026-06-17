@@ -28,6 +28,11 @@ export default function LoginPage() {
             <Field label="Mot de passe">
               <input name="password" type="password" required className={inputCls} placeholder="••••••••" />
             </Field>
+            <div className="flex justify-end -mt-1">
+              <Link href="/forgot-password" className="text-xs font-semibold text-brand hover:underline">
+                Mot de passe oublié ?
+              </Link>
+            </div>
             {state?.error && (
               <p className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm font-medium text-red-700">
                 {state.error}

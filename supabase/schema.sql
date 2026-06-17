@@ -36,8 +36,10 @@ create table orders (
   parcel_declared_value numeric not null default 0,
   parcel_dimensions text,
   dropoff_point text,
+  parcel_category text,
+  chargeable_weight numeric,
   total numeric not null,
-  status text not null default 'Pending Confirmation',
+  status text not null default 'Order Created',
   payment text not null default 'Unpaid',
   incident boolean not null default false,
   partner text,
@@ -82,38 +84,38 @@ insert into pricing_rules (origin, destination, band, base_price, transit_days) 
 
 -- ---------- Seed: demo orders ----------
 insert into orders (id, order_number, tracking_number, customer_name, customer_email, origin, destination, band, delivery, insurance, recipient_name, recipient_phone, recipient_address, parcel_weight, parcel_description, parcel_declared_value, parcel_dimensions, total, status, payment, incident, partner, created_at) values
-('00000000-0000-0000-0000-000000000001','YM-2026-0148','YMT-7F2K9Q','Awa Ndiaye','awa@example.com','France','Senegal','3-7kg','Home collection',true,'Moussa Ndiaye','+221 77 123 45 67','Sicap Liberté 4, Villa 5023, Dakar',5.2,'Clothes & medication',180,'40×30×25 cm',70.2,'In Transit','Paid',false,'DakarExpress 3PL','2026-06-02T10:14:00Z'),
+('00000000-0000-0000-0000-000000000001','YM-2026-0148','YMT-7F2K9Q','Awa Ndiaye','awa@example.com','France','Senegal','3-7kg','Home collection',true,'Moussa Ndiaye','+221 77 123 45 67','Sicap Liberté 4, Villa 5023, Dakar',5.2,'Clothes & medication',180,'40×30×25 cm',70.2,'In Air Transit','Paid',false,'DakarExpress 3PL','2026-06-02T10:14:00Z'),
 ('00000000-0000-0000-0000-000000000002','YM-2026-0152','YMT-3B8MZX','Awa Ndiaye','awa@example.com','France','Senegal','1-3kg','Relay point',false,'Fatou Sarr','+221 76 555 22 11','Relay: Boutique Khadim, Médina, Dakar',2.1,'Phone accessories',60,'25×20×10 cm',25,'Delivered','Paid',false,'DakarExpress 3PL','2026-05-12T11:00:00Z'),
-('00000000-0000-0000-0000-000000000003','YM-2026-0155','YMT-9D4PLA','Ibrahima Diallo','ibrahima@example.com','Senegal','France','7-15kg','Post office',true,'Mariama Diallo','+33 6 12 34 56 78','12 Rue de la République, 69002 Lyon',11,'Foodstuffs & fabrics',240,'55×40×30 cm',98.6,'Pending Confirmation','Unpaid',false,null,'2026-06-09T17:22:00Z'),
-('00000000-0000-0000-0000-000000000004','YM-2026-0143','YMT-5H7QRN','Cheikh Ba','cheikh@example.com','France','Senegal','15-25kg','Home collection',true,'Abdou Ba','+221 78 901 23 45','Quartier Escale, Saint-Louis',22,'Household appliances',450,'60×50×45 cm',155,'Arrived in Senegal','Paid',true,'Teranga Logistics','2026-05-28T09:00:00Z'),
-('00000000-0000-0000-0000-000000000005','YM-2026-0156','YMT-2J6WTC','Awa Ndiaye','awa@example.com','France','Senegal','0-1kg','Relay point',false,'Omar Ndiaye','+221 77 444 33 22','Relay: Pharmacie Yoff, Dakar',0.8,'Documents',0,'30×21×3 cm',15,'Processing','Paid',false,null,'2026-06-08T14:05:00Z');
+('00000000-0000-0000-0000-000000000003','YM-2026-0155','YMT-9D4PLA','Ibrahima Diallo','ibrahima@example.com','Senegal','France','7-15kg','Post office',true,'Mariama Diallo','+33 6 12 34 56 78','12 Rue de la République, 69002 Lyon',11,'Foodstuffs & fabrics',240,'55×40×30 cm',98.6,'Order Created','Unpaid',false,null,'2026-06-09T17:22:00Z'),
+('00000000-0000-0000-0000-000000000004','YM-2026-0143','YMT-5H7QRN','Cheikh Ba','cheikh@example.com','France','Senegal','15-25kg','Home collection',true,'Abdou Ba','+221 78 901 23 45','Quartier Escale, Saint-Louis',22,'Household appliances',450,'60×50×45 cm',155,'Arrived in Dakar','Paid',true,'Teranga Logistics','2026-05-28T09:00:00Z'),
+('00000000-0000-0000-0000-000000000005','YM-2026-0156','YMT-2J6WTC','Awa Ndiaye','awa@example.com','France','Senegal','0-1kg','Relay point',false,'Omar Ndiaye','+221 77 444 33 22','Relay: Pharmacie Yoff, Dakar',0.8,'Documents',0,'30×21×3 cm',15,'Pallet Preparation','Paid',false,null,'2026-06-08T14:05:00Z');
 
 -- ---------- Seed: status history ----------
 insert into status_log (order_id, status, by_who, note, at) values
-('00000000-0000-0000-0000-000000000001','Pending Confirmation','Awa Ndiaye',null,'2026-06-02T10:14:00Z'),
-('00000000-0000-0000-0000-000000000001','Parcel Received','Admin (Paris hub)',null,'2026-06-03T09:05:00Z'),
-('00000000-0000-0000-0000-000000000001','Processing','Admin (Paris hub)',null,'2026-06-03T15:40:00Z'),
-('00000000-0000-0000-0000-000000000001','Shipped from France','DakarExpress 3PL',null,'2026-06-05T08:00:00Z'),
-('00000000-0000-0000-0000-000000000001','In Transit','DakarExpress 3PL','Air freight CDG → DSS','2026-06-06T19:25:00Z'),
-('00000000-0000-0000-0000-000000000002','Pending Confirmation','Awa Ndiaye',null,'2026-05-12T11:00:00Z'),
-('00000000-0000-0000-0000-000000000002','Parcel Received','Admin (Paris hub)',null,'2026-05-13T10:00:00Z'),
-('00000000-0000-0000-0000-000000000002','Processing','Admin (Paris hub)',null,'2026-05-13T16:00:00Z'),
-('00000000-0000-0000-0000-000000000002','Shipped from France','DakarExpress 3PL',null,'2026-05-15T07:30:00Z'),
-('00000000-0000-0000-0000-000000000002','In Transit','DakarExpress 3PL',null,'2026-05-16T20:00:00Z'),
-('00000000-0000-0000-0000-000000000002','Arrived in Senegal','DakarExpress 3PL',null,'2026-05-19T14:10:00Z'),
+('00000000-0000-0000-0000-000000000001','Order Created','Awa Ndiaye',null,'2026-06-02T10:14:00Z'),
+('00000000-0000-0000-0000-000000000001','Received by E-Logik','Admin (Paris hub)',null,'2026-06-03T09:05:00Z'),
+('00000000-0000-0000-0000-000000000001','Pallet Preparation','Admin (Paris hub)',null,'2026-06-03T15:40:00Z'),
+('00000000-0000-0000-0000-000000000001','Collected by TAF','DakarExpress 3PL',null,'2026-06-05T08:00:00Z'),
+('00000000-0000-0000-0000-000000000001','In Air Transit','DakarExpress 3PL','Air freight CDG → DSS','2026-06-06T19:25:00Z'),
+('00000000-0000-0000-0000-000000000002','Order Created','Awa Ndiaye',null,'2026-05-12T11:00:00Z'),
+('00000000-0000-0000-0000-000000000002','Received by E-Logik','Admin (Paris hub)',null,'2026-05-13T10:00:00Z'),
+('00000000-0000-0000-0000-000000000002','Pallet Preparation','Admin (Paris hub)',null,'2026-05-13T16:00:00Z'),
+('00000000-0000-0000-0000-000000000002','Collected by TAF','DakarExpress 3PL',null,'2026-05-15T07:30:00Z'),
+('00000000-0000-0000-0000-000000000002','In Air Transit','DakarExpress 3PL',null,'2026-05-16T20:00:00Z'),
+('00000000-0000-0000-0000-000000000002','Arrived in Dakar','DakarExpress 3PL',null,'2026-05-19T14:10:00Z'),
 ('00000000-0000-0000-0000-000000000002','Out for Delivery','DakarExpress 3PL',null,'2026-05-20T08:45:00Z'),
 ('00000000-0000-0000-0000-000000000002','Delivered','DakarExpress 3PL','Picked up at relay point','2026-05-20T13:30:00Z'),
-('00000000-0000-0000-0000-000000000003','Pending Confirmation','Ibrahima Diallo',null,'2026-06-09T17:22:00Z'),
-('00000000-0000-0000-0000-000000000004','Pending Confirmation','Cheikh Ba',null,'2026-05-28T09:00:00Z'),
-('00000000-0000-0000-0000-000000000004','Parcel Received','Admin (Paris hub)',null,'2026-05-29T11:30:00Z'),
-('00000000-0000-0000-0000-000000000004','Processing','Admin (Paris hub)',null,'2026-05-29T17:00:00Z'),
-('00000000-0000-0000-0000-000000000004','Shipped from France','Teranga Logistics',null,'2026-06-01T08:00:00Z'),
-('00000000-0000-0000-0000-000000000004','In Transit','Teranga Logistics',null,'2026-06-02T21:00:00Z'),
-('00000000-0000-0000-0000-000000000004','Arrived in Senegal','Teranga Logistics',null,'2026-06-06T12:00:00Z'),
+('00000000-0000-0000-0000-000000000003','Order Created','Ibrahima Diallo',null,'2026-06-09T17:22:00Z'),
+('00000000-0000-0000-0000-000000000004','Order Created','Cheikh Ba',null,'2026-05-28T09:00:00Z'),
+('00000000-0000-0000-0000-000000000004','Received by E-Logik','Admin (Paris hub)',null,'2026-05-29T11:30:00Z'),
+('00000000-0000-0000-0000-000000000004','Pallet Preparation','Admin (Paris hub)',null,'2026-05-29T17:00:00Z'),
+('00000000-0000-0000-0000-000000000004','Collected by TAF','Teranga Logistics',null,'2026-06-01T08:00:00Z'),
+('00000000-0000-0000-0000-000000000004','In Air Transit','Teranga Logistics',null,'2026-06-02T21:00:00Z'),
+('00000000-0000-0000-0000-000000000004','Arrived in Dakar','Teranga Logistics',null,'2026-06-06T12:00:00Z'),
 ('00000000-0000-0000-0000-000000000004','Incident reported','Teranga Logistics','Outer carton damaged at customs — contents being verified','2026-06-07T10:15:00Z'),
-('00000000-0000-0000-0000-000000000005','Pending Confirmation','Awa Ndiaye',null,'2026-06-08T14:05:00Z'),
-('00000000-0000-0000-0000-000000000005','Parcel Received','Admin (Paris hub)',null,'2026-06-09T10:20:00Z'),
-('00000000-0000-0000-0000-000000000005','Processing','Admin (Paris hub)',null,'2026-06-10T09:00:00Z');
+('00000000-0000-0000-0000-000000000005','Order Created','Awa Ndiaye',null,'2026-06-08T14:05:00Z'),
+('00000000-0000-0000-0000-000000000005','Received by E-Logik','Admin (Paris hub)',null,'2026-06-09T10:20:00Z'),
+('00000000-0000-0000-0000-000000000005','Pallet Preparation','Admin (Paris hub)',null,'2026-06-10T09:00:00Z');
 
 -- ---------- Seed: claims ----------
 insert into claims (order_number, customer, type, status, detail, opened) values

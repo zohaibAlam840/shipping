@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eur, fmtDate, COUNTRY_FR, DELIVERY_FR } from "@/lib/data";
+import { eur, fmtDate, COUNTRY_FR, DELIVERY_FR, PARCEL_CATEGORY_FR } from "@/lib/data";
 import { requireUser } from "@/lib/auth";
 import { getOrderById } from "@/lib/db";
 import { isStripeConfigured } from "@/lib/stripe";
@@ -91,13 +91,15 @@ export default async function ShipmentDetailPage({
         <Card className="p-5">
           <h2 className="font-bold text-ink mb-3">Colis et prix</h2>
           <dl className="space-y-2 text-sm">
+            {order.category && (
+              <div><dt className="text-muted text-xs">Catégorie</dt><dd className="font-semibold text-ink">{PARCEL_CATEGORY_FR[order.category]}</dd></div>
+            )}
             <div><dt className="text-muted text-xs">Contenu</dt><dd className="font-semibold text-ink">{order.parcel.description}</dd></div>
-            <div><dt className="text-muted text-xs">Poids / taille</dt><dd className="font-semibold text-ink">{order.parcel.weightKg} kg · {order.parcel.dimensions}</dd></div>
+            <div><dt className="text-muted text-xs">Poids facturable / dimensions</dt><dd className="font-semibold text-ink">{order.chargeableWeightKg ?? order.parcel.weightKg} kg · {order.parcel.dimensions}</dd></div>
             <div><dt className="text-muted text-xs">Option de livraison</dt><dd className="font-semibold text-ink">{DELIVERY_FR[order.delivery]}</dd></div>
             {order.dropoffPoint && (
               <div><dt className="text-muted text-xs">Point de dépôt</dt><dd className="font-semibold text-ink">{order.dropoffPoint}</dd></div>
             )}
-            <div><dt className="text-muted text-xs">Assurance</dt><dd className="font-semibold text-ink">{order.insurance ? `Oui — valeur ${eur(order.parcel.declaredValue)}` : "Non"}</dd></div>
             <div className="pt-2 border-t border-line flex items-center justify-between">
               <dt className="font-semibold text-ink">Total</dt>
               <dd className="text-xl font-bold text-brand">{eur(order.total)}</dd>

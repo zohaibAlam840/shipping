@@ -2,13 +2,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { STATUSES, eur, fmtDate, STATUS_FR, COUNTRY_FR, type Order, type OrderStatus } from "@/lib/data";
+import {
+  STATUSES,
+  eur,
+  fmtDate,
+  STATUS_FR,
+  PAYMENT_FR,
+  COUNTRY_FR,
+  type Order,
+  type OrderStatus,
+  type PaymentStatus,
+} from "@/lib/data";
 import { Card, StatusBadge, PaymentBadge, inputCls } from "@/components/ui";
 import { ChevronRightIcon, SearchIcon } from "@/components/icons";
 
 export function OrdersExplorer({ orders }: { orders: Order[] }) {
   const [qStr, setQStr] = useState("");
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "All">("All");
+  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | "All">("All");
 
   const filtered = orders.filter((o) => {
     const matchesText =
@@ -18,7 +29,8 @@ export function OrdersExplorer({ orders }: { orders: Order[] }) {
         .toLowerCase()
         .includes(qStr.toLowerCase());
     const matchesStatus = statusFilter === "All" || o.status === statusFilter;
-    return matchesText && matchesStatus;
+    const matchesPayment = paymentFilter === "All" || o.payment === paymentFilter;
+    return matchesText && matchesStatus && matchesPayment;
   });
 
   return (
@@ -34,7 +46,7 @@ export function OrdersExplorer({ orders }: { orders: Order[] }) {
           />
         </div>
         <select
-          className={`${inputCls} sm:w-56`}
+          className={`${inputCls} sm:w-52`}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as OrderStatus | "All")}
         >
@@ -42,6 +54,16 @@ export function OrdersExplorer({ orders }: { orders: Order[] }) {
           {STATUSES.map((s) => (
             <option key={s} value={s}>{STATUS_FR[s]}</option>
           ))}
+        </select>
+        <select
+          className={`${inputCls} sm:w-44`}
+          value={paymentFilter}
+          onChange={(e) => setPaymentFilter(e.target.value as PaymentStatus | "All")}
+        >
+          <option value="All">Tous les paiements</option>
+          <option value="Paid">{PAYMENT_FR.Paid}</option>
+          <option value="Unpaid">{PAYMENT_FR.Unpaid}</option>
+          <option value="Refunded">{PAYMENT_FR.Refunded}</option>
         </select>
       </div>
 
