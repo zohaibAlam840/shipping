@@ -14,7 +14,11 @@ export function stripe(): Stripe {
     throw new Error("STRIPE_SECRET_KEY is not set");
   }
   if (!client) {
-    client = new Stripe(process.env.STRIPE_SECRET_KEY);
+    // Pin the API version so Stripe behaviour stays stable across SDK upgrades.
+    client = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2026-05-27.dahlia",
+      typescript: true,
+    });
   }
   return client;
 }

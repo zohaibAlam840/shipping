@@ -125,7 +125,9 @@ export default function BookPage() {
             : " Déposez votre colis au point choisi pour le mettre en route."}
         </p>
         <Card className="mt-6 p-5 text-left">
-          <p className="text-sm text-muted">Total à payer au dépôt</p>
+          <p className="text-sm text-muted">
+            {STRIPE_ENABLED ? "Total à payer" : "Total à payer au dépôt"}
+          </p>
           <p className="text-3xl font-bold text-brand">{q ? eur(q.total) : "—"}</p>
           <p className="text-xs text-muted mt-1">
             {COUNTRY_FR[b.calc.origin]} → {COUNTRY_FR[b.calc.destination]} · {band} · {DELIVERY_FR[b.delivery]}
