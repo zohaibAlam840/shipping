@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const CUSTOMER_ROUTES = ["/dashboard", "/shipments", "/book", "/profile"];
+const CUSTOMER_ROUTES = ["/dashboard", "/shipments", "/book", "/profile", "/payment"];
 
 export async function proxy(req: NextRequest) {
   const url = req.nextUrl;
@@ -64,6 +64,7 @@ export const config = {
     "/shipments/:path*",
     "/book/:path*",
     "/profile/:path*",
+    "/payment/:path*",
     "/login",
     "/signup",
   ],

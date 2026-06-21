@@ -42,8 +42,8 @@ export async function createCheckout(orderId: string): Promise<{ url?: string; e
         },
       ],
       metadata: { order_id: order.id, order_number: order.order_number },
-      success_url: `${appUrl()}/shipments/${order.id}?paye=1`,
-      cancel_url: `${appUrl()}/shipments/${order.id}`,
+      success_url: `${appUrl()}/payment?status=success&order=${order.id}`,
+      cancel_url: `${appUrl()}/payment?status=cancel&order=${order.id}`,
     });
     return { url: session.url ?? undefined };
   } catch (e) {
