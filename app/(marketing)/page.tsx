@@ -27,7 +27,7 @@ const FAQS = [
   },
   {
     q: "Que puis-je envoyer ?",
-    a: "Vêtements, chaussures, documents, produits électroniques, cadeaux et produits non périssables. Certains produits réglementés nécessitent une validation préalable.",
+    a: "Vêtements, chaussures, documents, produits électroniques, cadeaux et produits non périssables. Certains produits réglementés nécessitent une validation préalable. Les marchandises dangereuses, liquides inflammables, batteries au lithium non autorisées, aérosols, armes, drogues et denrées périssables sont interdits.",
   },
   {
     q: "Puis-je envoyer depuis toute la France ?",

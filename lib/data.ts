@@ -1,9 +1,12 @@
 // Shared types, pricing constants and formatters.
 // Live data comes from Supabase via lib/db.ts and app/actions.ts.
 
-export type WeightBand = "0-1kg" | "1-3kg" | "3-7kg" | "7-15kg" | "15-25kg";
+// "25kg+" is the custom-quote band: parcels above 25 kg have no grid price —
+// our team quotes them manually (see isCustomQuoteBand / CUSTOM_QUOTE_MESSAGE).
+export type WeightBand = "0-1kg" | "1-3kg" | "3-7kg" | "7-15kg" | "15-25kg" | "25kg+";
 export type Country = "France" | "Senegal";
-export type DeliveryOption = "Relay point" | "Post office" | "Home collection";
+// "3PL drop-off" = customer delivers directly to our 3PL partner (used for >25 kg).
+export type DeliveryOption = "Relay point" | "Post office" | "Home collection" | "3PL drop-off";
 
 // Operational workflow (canonical English keys, French shown via STATUS_FR).
 export const STATUSES = [
@@ -75,6 +78,34 @@ export const FEATURES = {
 export const HOME_COLLECTION_FEE = 20; // "Collecte à domicile"
 export const TAX_RATE = 0.0; // VAT handled later
 export const VOLUMETRIC_DIVISOR = 6000; // (L×W×H cm) / 6000 = volumetric kg
+export const MAX_PRICED_WEIGHT_KG = 25; // above this → custom quote
+
+// Shown near the calculator to explain how pricing works.
+export const CHARGEABLE_NOTE =
+  "Le prix d'expédition est calculé sur le poids le plus élevé entre le poids réel et le poids volumétrique.";
+
+// Shown instead of a price when the parcel is above 25 kg.
+export const CUSTOM_QUOTE_MESSAGE =
+  "Les envois de plus de 25 kg nécessitent un devis personnalisé. La collecte à domicile ou la livraison directe à notre partenaire 3PL est obligatoire. Notre équipe vous contactera sous 24 heures.";
+
+/** True for the >25 kg band that has no grid price. */
+export function isCustomQuoteBand(band: WeightBand) {
+  return band === "25kg+";
+}
+
+/** French label for a weight band (custom-quote band gets a friendly label). */
+export function bandLabel(band: WeightBand) {
+  return band === "25kg+" ? "+25 kg" : band;
+}
+
+/** Price for display: a real amount, or "À devis" when not yet quoted (total ≤ 0). */
+export function priceLabel(total: number) {
+  return total > 0 ? eur(total) : "Sur devis";
+}
+
+// Delivery options allowed for >25 kg parcels (La Poste / Mondial Relay can't
+// carry them): home collection by YonelMa, or direct drop-off at our 3PL.
+export const CUSTOM_QUOTE_DELIVERY: DeliveryOption[] = ["Home collection", "3PL drop-off"];
 
 /** Volumetric weight in kg from dimensions in centimetres. */
 export function volumetricWeight(lengthCm: number, widthCm: number, heightCm: number) {
@@ -93,7 +124,8 @@ export function bandForWeight(kg: number): WeightBand {
   if (kg <= 3) return "1-3kg";
   if (kg <= 7) return "3-7kg";
   if (kg <= 15) return "7-15kg";
-  return "15-25kg";
+  if (kg <= 25) return "15-25kg";
+  return "25kg+"; // above 25 kg → custom quote (no grid price)
 }
 
 export function findRule(origin: Country, destination: Country, band: WeightBand) {
@@ -238,6 +270,7 @@ export const DELIVERY_FR: Record<DeliveryOption, string> = {
   "Relay point": "Point relais",
   "Post office": "Bureau de poste",
   "Home collection": "Collecte à domicile",
+  "3PL drop-off": "Dépôt direct chez notre partenaire 3PL",
 };
 
 export const CLAIM_TYPE_FR: Record<string, string> = {

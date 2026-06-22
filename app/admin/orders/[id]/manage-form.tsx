@@ -8,6 +8,7 @@ import {
   PARTNERS,
   STATUS_FR,
   PAYMENT_FR,
+  isCustomQuoteBand,
   type Order,
   type OrderStatus,
   type PaymentStatus,
@@ -19,9 +20,12 @@ export function ManageOrderForm({ order }: { order: Order }) {
   const [status, setStatus] = useState<OrderStatus>(order.status);
   const [payment, setPayment] = useState<PaymentStatus>(order.payment);
   const [partner, setPartner] = useState(order.partner ?? "");
+  const [total, setTotal] = useState(String(order.total ?? 0));
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
+
+  const needsQuote = isCustomQuoteBand(order.band);
 
   function save() {
     setMsg(null);
@@ -30,6 +34,7 @@ export function ManageOrderForm({ order }: { order: Order }) {
         status,
         payment,
         partner: partner || null,
+        total: Number(total) || 0,
         note: note || undefined,
       });
       if (res.error) setMsg(res.error);
@@ -56,6 +61,23 @@ export function ManageOrderForm({ order }: { order: Order }) {
           <option value="Paid">{PAYMENT_FR.Paid}</option>
           <option value="Refunded">{PAYMENT_FR.Refunded}</option>
         </select>
+      </Field>
+      <Field
+        label={needsQuote ? "Prix du devis (€)" : "Prix (€)"}
+        hint={
+          needsQuote
+            ? "Colis > 25 kg : saisissez le montant du devis, puis passez le paiement à « Payé » une fois réglé."
+            : "Montant total facturé au client."
+        }
+      >
+        <input
+          type="number"
+          min={0}
+          step="0.01"
+          className={`${inputCls} ${needsQuote && Number(total) <= 0 ? "border-accent ring-2 ring-accent/20" : ""}`}
+          value={total}
+          onChange={(e) => setTotal(e.target.value)}
+        />
       </Field>
       <Field label="Partenaire assigné">
         <select className={inputCls} value={partner} onChange={(e) => setPartner(e.target.value)}>

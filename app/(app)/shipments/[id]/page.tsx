@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eur, fmtDate, COUNTRY_FR, DELIVERY_FR, PARCEL_CATEGORY_FR } from "@/lib/data";
+import { eur, priceLabel, fmtDate, COUNTRY_FR, DELIVERY_FR, PARCEL_CATEGORY_FR, isCustomQuoteBand } from "@/lib/data";
 import { requireUser } from "@/lib/auth";
 import { getOrderById } from "@/lib/db";
 import { isStripeConfigured } from "@/lib/stripe";
@@ -50,24 +50,33 @@ export default async function ShipmentDetailPage({
         </Card>
       )}
 
-      {order.payment === "Unpaid" && (
-        <Card className="p-5 mb-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-semibold text-ink">Paiement</p>
-              <p className="text-sm text-muted">
-                Montant à régler : <span className="font-bold text-ink">{eur(order.total)}</span>
-              </p>
-            </div>
-            {isStripeConfigured() ? (
-              <PayButton orderId={order.id} />
-            ) : (
-              <span className="rounded-full bg-amber-50 border border-amber-200 px-3 py-2 text-xs font-semibold text-amber-700">
-                À régler au dépôt (paiement en ligne bientôt)
-              </span>
-            )}
-          </div>
+      {isCustomQuoteBand(order.band) && order.total <= 0 ? (
+        <Card className="p-5 mb-4 border-accent/40 bg-accent/10">
+          <p className="font-semibold text-ink">Devis personnalisé en cours</p>
+          <p className="text-sm text-muted mt-1">
+            Votre colis dépasse 25 kg. Notre équipe vous contactera sous 24 heures avec un devis et les modalités de paiement.
+          </p>
         </Card>
+      ) : (
+        order.payment === "Unpaid" && (
+          <Card className="p-5 mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold text-ink">Paiement</p>
+                <p className="text-sm text-muted">
+                  Montant à régler : <span className="font-bold text-ink">{eur(order.total)}</span>
+                </p>
+              </div>
+              {isStripeConfigured() ? (
+                <PayButton orderId={order.id} />
+              ) : (
+                <span className="rounded-full bg-amber-50 border border-amber-200 px-3 py-2 text-xs font-semibold text-amber-700">
+                  À régler au dépôt (paiement en ligne bientôt)
+                </span>
+              )}
+            </div>
+          </Card>
+        )
       )}
 
       <Card className="p-5 mb-4">
@@ -102,7 +111,7 @@ export default async function ShipmentDetailPage({
             )}
             <div className="pt-2 border-t border-line flex items-center justify-between">
               <dt className="font-semibold text-ink">Total</dt>
-              <dd className="text-xl font-bold text-brand">{eur(order.total)}</dd>
+              <dd className="text-xl font-bold text-brand">{priceLabel(order.total)}</dd>
             </div>
           </dl>
         </Card>

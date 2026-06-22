@@ -8,6 +8,7 @@ import { getOrderByCode } from "@/lib/db";
 import { sendOrderCreatedEmail, sendStatusEmail } from "@/lib/email";
 import {
   HOME_COLLECTION_FEE,
+  isCustomQuoteBand,
   volumetricWeight,
   chargeableWeight,
   bandForWeight,
@@ -48,19 +49,25 @@ export async function createOrder(input: CreateOrderInput) {
   const chargeable = chargeableWeight(input.parcel.actualWeight, volumetric);
   const band = bandForWeight(chargeable);
   const dimensions = `${input.parcel.length}×${input.parcel.width}×${input.parcel.height} cm`;
+  const customQuote = isCustomQuoteBand(band);
 
-  // Authoritative price from the DB, not from the client.
-  const { data: rule, error: ruleErr } = await db
-    .from("pricing_rules")
-    .select("base_price")
-    .eq("origin", input.origin)
-    .eq("destination", input.destination)
-    .eq("band", band)
-    .single();
-  if (ruleErr || !rule) return { error: "Aucun tarif trouvé pour ce trajet." };
+  // Parcels above 25 kg have no grid price: store the order with total 0 ("à
+  // devis") so the team can quote it manually and contact the customer.
+  // Otherwise take the authoritative price from the DB, not from the client.
+  let total = 0;
+  if (!customQuote) {
+    const { data: rule, error: ruleErr } = await db
+      .from("pricing_rules")
+      .select("base_price")
+      .eq("origin", input.origin)
+      .eq("destination", input.destination)
+      .eq("band", band)
+      .single();
+    if (ruleErr || !rule) return { error: "Aucun tarif trouvé pour ce trajet." };
 
-  const optionsFee = input.delivery === "Home collection" ? HOME_COLLECTION_FEE : 0;
-  const total = Math.round((Number(rule.base_price) + optionsFee) * 100) / 100;
+    const optionsFee = input.delivery === "Home collection" ? HOME_COLLECTION_FEE : 0;
+    total = Math.round((Number(rule.base_price) + optionsFee) * 100) / 100;
+  }
 
   // Sequential YonelMa parcel reference: YNM-2026-0001, 0002, …
   // One reference is used as both the order number and the tracking number,
@@ -122,6 +129,7 @@ export async function createOrder(input: CreateOrderInput) {
         order_id: created.id,
         status: "Order Created",
         by_who: user.name,
+        note: customQuote ? "Devis personnalisé demandé (colis > 25 kg)" : null,
       });
       void sendOrderCreatedEmail(user.email, user.name, reference);
       revalidatePath("/dashboard");
@@ -159,6 +167,7 @@ export async function updateOrderAdmin(
     status: OrderStatus;
     payment: PaymentStatus;
     partner: string | null;
+    total?: number;
     note?: string;
   },
 ) {
@@ -170,14 +179,17 @@ export async function updateOrderAdmin(
     .single();
   if (readErr) return { error: readErr.message };
 
-  const { error } = await db
-    .from("orders")
-    .update({
-      status: patch.status,
-      payment: patch.payment,
-      partner: patch.partner || null,
-    })
-    .eq("id", id);
+  const update: Record<string, unknown> = {
+    status: patch.status,
+    payment: patch.payment,
+    partner: patch.partner || null,
+  };
+  // Allow setting/adjusting the price (e.g. quoting a >25 kg custom order).
+  if (typeof patch.total === "number" && patch.total >= 0) {
+    update.total = Math.round(patch.total * 100) / 100;
+  }
+
+  const { error } = await db.from("orders").update(update).eq("id", id);
   if (error) return { error: error.message };
 
   if (before.status !== patch.status || patch.note) {

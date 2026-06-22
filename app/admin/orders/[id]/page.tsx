@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eur, fmtDate, COUNTRY_FR, DELIVERY_FR, PARCEL_CATEGORY_FR } from "@/lib/data";
+import { priceLabel, fmtDate, COUNTRY_FR, DELIVERY_FR, PARCEL_CATEGORY_FR } from "@/lib/data";
 import { getOrderById } from "@/lib/db";
 import { Card, PageTitle, StatusBadge, PaymentBadge, Timeline } from "@/components/ui";
 import { ManageOrderForm } from "./manage-form";
@@ -24,7 +24,7 @@ export default async function AdminOrderDetail({
       <div className="mt-3">
         <PageTitle
           title={order.orderNumber}
-          subtitle={`${order.customer} · réservé le ${fmtDate(order.date)} · ${eur(order.total)}`}
+          subtitle={`${order.customer} · réservé le ${fmtDate(order.date)} · ${priceLabel(order.total)}`}
         />
       </div>
       <div className="flex items-center gap-1.5 flex-wrap mb-4">

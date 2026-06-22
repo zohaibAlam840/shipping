@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { eur, fmtDate, COUNTRY_FR } from "@/lib/data";
+import { priceLabel, fmtDate, COUNTRY_FR } from "@/lib/data";
 import { requireUser } from "@/lib/auth";
 import { getOrdersByEmail } from "@/lib/db";
 import { Card, PageTitle, StatusBadge, PaymentBadge } from "@/components/ui";
@@ -41,7 +41,7 @@ export default async function ShipmentsPage() {
                     <p className="font-semibold text-ink text-sm truncate">
                       {COUNTRY_FR[o.origin]} → {COUNTRY_FR[o.destination]}
                     </p>
-                    <p className="font-bold text-ink text-sm">{eur(o.total)}</p>
+                    <p className="font-bold text-ink text-sm">{priceLabel(o.total)}</p>
                   </div>
                   <p className="text-xs text-muted mt-0.5">
                     {o.orderNumber} · {o.band} · {fmtDate(o.date)}

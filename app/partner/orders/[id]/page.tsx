@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DELIVERY_FR } from "@/lib/data";
+import { DELIVERY_FR, bandLabel } from "@/lib/data";
 import { getOrderById } from "@/lib/db";
 import { Card, PageTitle, StatusBadge, Timeline } from "@/components/ui";
 import { PartnerControls } from "./partner-controls";
@@ -24,7 +24,7 @@ export default async function PartnerOrderDetail({
       <div className="mt-3">
         <PageTitle
           title={order.orderNumber}
-          subtitle={`${order.band} · ${DELIVERY_FR[order.delivery]}`}
+          subtitle={`${bandLabel(order.band)} · ${DELIVERY_FR[order.delivery]}`}
         />
       </div>
       <div className="mb-4">

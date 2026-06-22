@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { fmtDate, COUNTRY_FR, DELIVERY_FR, type Order } from "@/lib/data";
+import { fmtDate, COUNTRY_FR, DELIVERY_FR, bandLabel, type Order } from "@/lib/data";
 import { trackByCode } from "@/app/actions";
 import { Card, PageTitle, StatusBadge, Timeline, inputCls } from "@/components/ui";
 import { SearchIcon, BoxIcon } from "@/components/icons";
@@ -68,7 +68,7 @@ export default function TrackPage() {
                 {COUNTRY_FR[result.origin]} → {COUNTRY_FR[result.destination]}
               </p>
               <p className="text-sm text-muted">
-                {result.band} · {DELIVERY_FR[result.delivery]}
+                {bandLabel(result.band)} · {DELIVERY_FR[result.delivery]}
               </p>
             </div>
             <StatusBadge status={result.status} incident={result.incident} />

@@ -6,6 +6,10 @@ import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import {
   eur,
+  bandLabel,
+  isCustomQuoteBand,
+  CUSTOM_QUOTE_MESSAGE,
+  CUSTOM_QUOTE_DELIVERY,
   COUNTRY_FR,
   DELIVERY_FR,
   MONDIAL_RELAY_POINTS,
@@ -40,6 +44,7 @@ const DELIVERY_OPTIONS: { value: DeliveryOption; icon: typeof PinIcon; text: str
   { value: "Relay point", icon: PinIcon, text: "Déposez dans un commerce partenaire près de chez vous", fee: "Gratuit" },
   { value: "Post office", icon: TruckIcon, text: "Déposez dans un bureau de poste partenaire", fee: "Gratuit" },
   { value: "Home collection", icon: HomeIcon, text: "Nous récupérons le colis chez vous", fee: "+20 €" },
+  { value: "3PL drop-off", icon: TruckIcon, text: "Déposez votre colis directement chez notre partenaire 3PL", fee: "Sur devis" },
 ];
 
 export default function BookPage() {
@@ -59,9 +64,34 @@ export default function BookPage() {
     dropoffPoint: "",
   });
 
+  const { chargeable, band, q } = computeQuote({
+    ...b.calc,
+    homeCollection: b.delivery === "Home collection",
+  });
+  const customQuote = isCustomQuoteBand(band);
+
+  // Above 25 kg only home collection / 3PL drop-off are allowed; below, hide 3PL.
+  const deliveryOptions = customQuote
+    ? DELIVERY_OPTIONS.filter((o) => CUSTOM_QUOTE_DELIVERY.includes(o.value))
+    : DELIVERY_OPTIONS.filter((o) => o.value !== "3PL drop-off");
+
   const needsDropoff = b.delivery === "Relay point" || b.delivery === "Post office";
   const dropoffValid = !needsDropoff || b.dropoffPoint.trim().length > 0;
   const dropoffList = b.delivery === "Post office" ? LAPOSTE_OFFICES : MONDIAL_RELAY_POINTS;
+
+  // Keep the chosen delivery valid for the weight: >25 kg → home/3PL only,
+  // ≤25 kg → no 3PL. Coerced when the parcel changes (see onCalcChange) so we
+  // never store a delivery that isn't offered.
+  function deliveryForWeight(calc: CalcState, current: DeliveryOption): DeliveryOption {
+    const cq = isCustomQuoteBand(computeQuote({ ...calc, homeCollection: current === "Home collection" }).band);
+    if (cq && !CUSTOM_QUOTE_DELIVERY.includes(current)) return "Home collection";
+    if (!cq && current === "3PL drop-off") return "Relay point";
+    return current;
+  }
+
+  function onCalcChange(calc: CalcState) {
+    setB((prev) => ({ ...prev, calc, delivery: deliveryForWeight(calc, prev.delivery) }));
+  }
 
   useEffect(() => {
     createSupabaseBrowser()
@@ -77,11 +107,6 @@ export default function BookPage() {
         }
       });
   }, []);
-
-  const { chargeable, band, q } = computeQuote({
-    ...b.calc,
-    homeCollection: b.delivery === "Home collection",
-  });
 
   const detailsValid =
     b.recipient.name && b.recipient.phone && b.recipient.address && b.parcel.description;
@@ -120,17 +145,19 @@ export default function BookPage() {
         <h1 className="text-2xl font-bold text-ink">Réservation confirmée !</h1>
         <p className="text-muted mt-2">
           Votre commande <span className="font-bold text-ink">{done.orderNumber}</span> est enregistrée.
-          {b.delivery === "Home collection"
+          {customQuote
+            ? " Notre équipe vous contactera sous 24 heures avec un devis personnalisé."
+            : b.delivery === "Home collection"
             ? " Nous vous contacterons pour planifier l'enlèvement."
             : " Déposez votre colis au point choisi pour le mettre en route."}
         </p>
         <Card className="mt-6 p-5 text-left">
           <p className="text-sm text-muted">
-            {STRIPE_ENABLED ? "Total à payer" : "Total à payer au dépôt"}
+            {customQuote ? "Montant" : STRIPE_ENABLED ? "Total à payer" : "Total à payer au dépôt"}
           </p>
-          <p className="text-3xl font-bold text-brand">{q ? eur(q.total) : "—"}</p>
+          <p className="text-3xl font-bold text-brand">{customQuote ? "Sur devis" : q ? eur(q.total) : "—"}</p>
           <p className="text-xs text-muted mt-1">
-            {COUNTRY_FR[b.calc.origin]} → {COUNTRY_FR[b.calc.destination]} · {band} · {DELIVERY_FR[b.delivery]}
+            {COUNTRY_FR[b.calc.origin]} → {COUNTRY_FR[b.calc.destination]} · {bandLabel(band)} · {DELIVERY_FR[b.delivery]}
           </p>
           <p className="text-xs text-muted mt-1">
             Numéro de suivi{" "}
@@ -138,8 +165,8 @@ export default function BookPage() {
           </p>
         </Card>
         <div className="mt-6 flex flex-col gap-2">
-          {STRIPE_ENABLED && (
-            <PayButton orderId={done.id} className="w-full" label={`Payer ${q ? eur(q.total) : ""} en ligne`} />
+          {STRIPE_ENABLED && q && (
+            <PayButton orderId={done.id} className="w-full" label={`Payer ${eur(q.total)} en ligne`} />
           )}
           <Link href="/shipments" className="h-12 rounded-full bg-brand text-white font-semibold flex items-center justify-center hover:bg-brand-dark transition">
             Voir mes envois
@@ -168,7 +195,7 @@ export default function BookPage() {
 
       <Card className="p-5">
         {step === 0 && (
-          <Calculator state={b.calc} onChange={(calc) => setB({ ...b, calc })} />
+          <Calculator state={b.calc} onChange={onCalcChange} />
         )}
 
         {step === 1 && (
@@ -245,7 +272,12 @@ export default function BookPage() {
         {step === 2 && (
           <div className="space-y-3">
             <h2 className="font-bold text-ink">Comment le colis nous parvient-il ?</h2>
-            {DELIVERY_OPTIONS.map((opt) => (
+            {customQuote && (
+              <p className="rounded-xl bg-accent/10 border border-accent/40 px-3.5 py-2.5 text-xs text-muted">
+                Pour les envois de plus de 25 kg, seules la collecte à domicile et le dépôt direct chez notre partenaire 3PL sont possibles.
+              </p>
+            )}
+            {deliveryOptions.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
@@ -308,13 +340,13 @@ export default function BookPage() {
           </div>
         )}
 
-        {step === 3 && q && (
+        {step === 3 && (
           <div className="space-y-4">
             <h2 className="font-bold text-ink">Vérifiez votre réservation</h2>
             <dl className="space-y-2.5 text-sm">
               {[
                 ["Trajet", `${COUNTRY_FR[b.calc.origin]} → ${COUNTRY_FR[b.calc.destination]}`],
-                ["Poids facturable", `${chargeable} kg · tranche ${band}`],
+                ["Poids facturable", `${chargeable} kg · tranche ${bandLabel(band)}`],
                 ["Catégorie", PARCEL_CATEGORY_FR[b.category]],
                 ["Expéditeur", `${sender.name}${sender.phone ? ` · ${sender.phone}` : ""}`],
                 ["Destinataire", `${b.recipient.name} · ${b.recipient.phone}`],
@@ -329,19 +361,30 @@ export default function BookPage() {
                 </div>
               ))}
             </dl>
-            <div className="rounded-xl bg-brand-light/60 border border-brand/25 p-4 flex items-end justify-between">
-              <div className="text-sm text-muted">
-                <p>Base {eur(q.basePrice)}{q.optionsFee > 0 && <> + options {eur(q.optionsFee)}</>}</p>
-                <p className="text-xs mt-0.5">Estimé {q.transitDays}</p>
+            {customQuote ? (
+              <div className="rounded-xl bg-accent/10 border border-accent/40 p-4">
+                <p className="text-sm font-semibold text-ink mb-1">Devis personnalisé</p>
+                <p className="text-sm text-muted">{CUSTOM_QUOTE_MESSAGE}</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs font-semibold text-muted uppercase">Total</p>
-                <p className="text-3xl font-bold text-brand leading-none mt-1">{eur(q.total)}</p>
-              </div>
-            </div>
-            <p className="text-xs text-muted">
-              Après confirmation, payez en ligne par carte ou au dépôt / à l'enlèvement.
-            </p>
+            ) : (
+              q && (
+                <>
+                  <div className="rounded-xl bg-brand-light/60 border border-brand/25 p-4 flex items-end justify-between">
+                    <div className="text-sm text-muted">
+                      <p>Base {eur(q.basePrice)}{q.optionsFee > 0 && <> + options {eur(q.optionsFee)}</>}</p>
+                      <p className="text-xs mt-0.5">Estimé {q.transitDays}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-semibold text-muted uppercase">Total</p>
+                      <p className="text-3xl font-bold text-brand leading-none mt-1">{eur(q.total)}</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted">
+                    Après confirmation, payez en ligne par carte ou au dépôt / à l&apos;enlèvement.
+                  </p>
+                </>
+              )
+            )}
           </div>
         )}
       </Card>

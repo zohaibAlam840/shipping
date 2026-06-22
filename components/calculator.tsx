@@ -7,9 +7,14 @@ import {
   HOME_COLLECTION_FEE,
   quote,
   eur,
+  priceLabel,
+  bandLabel,
+  isCustomQuoteBand,
   volumetricWeight,
   chargeableWeight,
   bandForWeight,
+  CHARGEABLE_NOTE,
+  CUSTOM_QUOTE_MESSAGE,
   type Country,
 } from "@/lib/data";
 import { Card, Field, inputCls } from "@/components/ui";
@@ -87,6 +92,7 @@ export function Calculator({
   onChange: (s: CalcState) => void;
 }) {
   const { volumetric, chargeable, band, q } = computeQuote(state);
+  const customQuote = isCustomQuoteBand(band);
   const set = (patch: Partial<CalcState>) => onChange({ ...state, ...patch });
   const numInput = "w-full h-12 rounded-xl border border-line bg-card px-3 text-[15px] text-ink text-center outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 transition";
 
@@ -127,41 +133,56 @@ export function Calculator({
         </div>
       </Field>
 
-      {/* Chargeable weight breakdown */}
+      {/* How pricing works */}
+      <p className="rounded-xl bg-brand-light/40 border border-brand/15 px-3.5 py-2.5 text-xs text-muted">
+        {CHARGEABLE_NOTE}
+      </p>
+
+      {/* Weight & price breakdown */}
       <div className="rounded-xl border border-line bg-background p-3.5 text-sm">
         <div className="flex justify-between"><span className="text-muted">Poids réel</span><span className="font-semibold text-ink">{state.actualWeight || 0} kg</span></div>
         <div className="flex justify-between mt-1"><span className="text-muted">Poids volumétrique</span><span className="font-semibold text-ink">{volumetric} kg</span></div>
+        <div className="flex justify-between mt-1"><span className="text-muted">Poids facturable</span><span className="font-semibold text-ink">{chargeable} kg · tranche {bandLabel(band)}</span></div>
         <div className="flex justify-between mt-1 pt-1 border-t border-line">
-          <span className="text-ink font-semibold">Poids facturable</span>
-          <span className="font-bold text-brand">{chargeable} kg · tranche {band}</span>
+          <span className="text-ink font-semibold">Prix d&apos;expédition</span>
+          <span className="font-bold text-brand">{q ? priceLabel(q.total) : "Sur devis"}</span>
         </div>
       </div>
 
-      <Toggle
-        checked={state.homeCollection}
-        onChange={(v) => set({ homeCollection: v })}
-        label="Collecte à domicile"
-        hint={`Nous récupérons le colis chez vous (+${eur(HOME_COLLECTION_FEE)})`}
-      />
+      {!customQuote && (
+        <Toggle
+          checked={state.homeCollection}
+          onChange={(v) => set({ homeCollection: v })}
+          label="Collecte à domicile"
+          hint={`Nous récupérons le colis chez vous (+${eur(HOME_COLLECTION_FEE)})`}
+        />
+      )}
 
-      {q && (
-        <Card className="p-4 bg-brand-light/50 !border-brand/25">
-          <div className="flex items-end justify-between gap-3">
-            <div className="text-sm text-muted space-y-0.5">
-              <p>Prix de base <span className="font-semibold text-ink">{eur(q.basePrice)}</span></p>
-              {q.optionsFee > 0 && (
-                <p>Collecte <span className="font-semibold text-ink">{eur(q.optionsFee)}</span></p>
-              )}
-              <p className="flex items-center gap-1.5">
-                <ClockIcon width={14} height={14} /> {q.transitDays}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-semibold text-muted uppercase">Total</p>
-              <p className="text-3xl font-bold text-brand leading-none mt-1">{eur(q.total)}</p>
-            </div>
-          </div>
+      {customQuote ? (
+        <Card className="p-4 bg-accent/10 !border-accent/40">
+          <p className="text-sm font-semibold text-ink mb-1">Devis personnalisé requis</p>
+          <p className="text-sm text-muted">{CUSTOM_QUOTE_MESSAGE}</p>
         </Card>
+      ) : (
+        q && (
+          <Card className="p-4 bg-brand-light/50 !border-brand/25">
+            <div className="flex items-end justify-between gap-3">
+              <div className="text-sm text-muted space-y-0.5">
+                <p>Prix de base <span className="font-semibold text-ink">{eur(q.basePrice)}</span></p>
+                {q.optionsFee > 0 && (
+                  <p>Collecte <span className="font-semibold text-ink">{eur(q.optionsFee)}</span></p>
+                )}
+                <p className="flex items-center gap-1.5">
+                  <ClockIcon width={14} height={14} /> {q.transitDays}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-semibold text-muted uppercase">Total</p>
+                <p className="text-3xl font-bold text-brand leading-none mt-1">{eur(q.total)}</p>
+              </div>
+            </div>
+          </Card>
+        )
       )}
     </div>
   );

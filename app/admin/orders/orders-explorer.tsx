@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   STATUSES,
-  eur,
+  priceLabel,
   fmtDate,
   STATUS_FR,
   PAYMENT_FR,
@@ -77,7 +77,7 @@ export function OrdersExplorer({ orders }: { orders: Order[] }) {
                     <p className="font-semibold text-ink text-sm truncate">
                       {o.orderNumber} · {o.customer}
                     </p>
-                    <p className="font-bold text-ink text-sm shrink-0">{eur(o.total)}</p>
+                    <p className="font-bold text-ink text-sm shrink-0">{priceLabel(o.total)}</p>
                   </div>
                   <p className="text-xs text-muted mt-0.5">
                     {COUNTRY_FR[o.origin]} → {COUNTRY_FR[o.destination]} · {o.band} · {fmtDate(o.date)}

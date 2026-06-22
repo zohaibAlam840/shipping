@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   eur,
+  priceLabel,
   fmtDate,
   statusIndex,
   STATUSES,
@@ -241,7 +242,7 @@ export default async function DashboardPage() {
                     <p className="font-semibold text-ink text-sm truncate">
                       {COUNTRY_FR[o.origin]} → {COUNTRY_FR[o.destination]} · {o.band}
                     </p>
-                    <p className="font-bold text-ink text-sm shrink-0">{eur(o.total)}</p>
+                    <p className="font-bold text-ink text-sm shrink-0">{priceLabel(o.total)}</p>
                   </div>
                   <p className="text-xs text-muted mt-0.5 flex items-center gap-1">
                     <PinIcon width={12} height={12} /> {o.trackingNumber} · {fmtDate(o.date)}
