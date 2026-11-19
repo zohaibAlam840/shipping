@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:pull": "prisma db pull",
-    "db:push": "prisma db push",
-    "db:check": "node scripts/check-db.mjs"
+    "db:check": "node scripts/check-db.mjs",
+    "db:exec": "prisma db execute"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
