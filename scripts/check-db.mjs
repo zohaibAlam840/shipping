@@ -13,7 +13,14 @@ const URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = env.SUPABASE_SECRET_KEY;
 
 let ok = true;
-for (const table of ["pricing_rules", "orders", "status_log", "claims"]) {
+const TABLES = [
+  // core (schema.sql)
+  "pricing_rules", "orders", "status_log", "claims",
+  // Phase 1 Senegal foundation (migration-senegal-phase1.sql)
+  "app_users", "relays", "relay_users", "driver_routes", "parcels", "events", "audit_log",
+];
+
+for (const table of TABLES) {
   const res = await fetch(`${URL}/rest/v1/${table}?select=*&limit=0`, {
     headers: {
       apikey: KEY,
@@ -33,6 +40,6 @@ for (const table of ["pricing_rules", "orders", "status_log", "claims"]) {
 console.log(
   ok
     ? "\nDatabase ready."
-    : "\nTables missing — paste supabase/schema.sql into the Supabase SQL Editor and re-run this.",
+    : "\nTables missing or unreachable — paste supabase/setup-all.sql into the Supabase SQL Editor and re-run this.\n(A 'permission denied' message means the Data API grants at the end of that file haven't been applied.)",
 );
 process.exit(ok ? 0 : 1);

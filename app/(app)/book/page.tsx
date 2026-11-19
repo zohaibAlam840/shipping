@@ -26,7 +26,11 @@ import { Card, PageTitle, Field, inputCls } from "@/components/ui";
 import { PayButton } from "@/components/pay-button";
 import { ArrowRightIcon, CheckIcon, PinIcon, TruckIcon, HomeIcon } from "@/components/icons";
 
-const STRIPE_ENABLED = Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+// Phase 1 keeps online payment switched off (spec §2: no live customer
+// payments). Both flags must be set for the pay button to appear.
+const STRIPE_ENABLED =
+  process.env.NEXT_PUBLIC_PAYMENTS_ENABLED === "true" &&
+  Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 const STEPS = ["Devis", "Détails", "Dépôt", "Récapitulatif"] as const;
 const OTHER = "__other__";

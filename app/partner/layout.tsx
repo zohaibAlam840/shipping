@@ -1,21 +1,17 @@
-"use client";
+// Partner / driver workspace.
+//
+// SECURITY: this area used to be completely unguarded — it is not in the
+// customer route list, so anyone who knew the URL could open it and advance
+// parcel statuses. The role guard below is the fix (spec §3).
+import { requireStaff, ROLE_FR } from "@/lib/roles";
+import { PartnerNav } from "./partner-nav";
 
-import { AppShell } from "@/components/app-shell";
-import { BoxIcon, AlertIcon } from "@/components/icons";
-
-const NAV = [
-  { href: "/partner", label: "Assignés", icon: BoxIcon, exact: true },
-  { href: "/partner/incidents", label: "Incidents", icon: AlertIcon },
-];
-
-export default function PartnerLayout({
+export default async function PartnerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AppShell items={NAV} title="YonelMa Partner" accent="Partner">
-      {children}
-    </AppShell>
-  );
+  const user = await requireStaff(["driver", "support", "admin"]);
+
+  return <PartnerNav accent={ROLE_FR[user.role]}>{children}</PartnerNav>;
 }

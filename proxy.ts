@@ -4,6 +4,11 @@ import { createServerClient } from "@supabase/ssr";
 
 const CUSTOMER_ROUTES = ["/dashboard", "/shipments", "/book", "/profile", "/payment"];
 
+// Staff areas (driver / merchant / relay workspaces). These need a Supabase
+// session too — the ROLE check itself happens server-side in lib/roles.ts,
+// because proxy runs before render and is only an optimistic pre-filter.
+const STAFF_ROUTES = ["/partner", "/driver", "/merchant"];
+
 export async function proxy(req: NextRequest) {
   const url = req.nextUrl;
 
@@ -38,6 +43,11 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
+  // ---- Staff areas: require a Supabase session (role checked on the server) ----
+  if (STAFF_ROUTES.some((p) => url.pathname.startsWith(p)) && !user) {
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
+
   // Already logged in → skip the auth pages.
   if ((url.pathname === "/login" || url.pathname === "/signup") && user) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
@@ -65,6 +75,9 @@ export const config = {
     "/book/:path*",
     "/profile/:path*",
     "/payment/:path*",
+    "/partner/:path*",
+    "/driver/:path*",
+    "/merchant/:path*",
     "/login",
     "/signup",
   ],

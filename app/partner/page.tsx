@@ -1,23 +1,39 @@
 import Link from "next/link";
 import { fmtDate } from "@/lib/data";
-import { getOrdersByPartner } from "@/lib/db";
+import { getOrders, getOrdersByPartner } from "@/lib/db";
+import { requireStaff } from "@/lib/roles";
 import { Card, PageTitle, StatusBadge } from "@/components/ui";
 import { BoxIcon, ChevronRightIcon, PinIcon } from "@/components/icons";
 
 export const metadata = { title: "Partner workspace" };
 export const dynamic = "force-dynamic";
 
-// Demo: the signed-in partner is DakarExpress 3PL
-const PARTNER_NAME = "DakarExpress 3PL";
-
 export default async function PartnerPage() {
-  const assigned = await getOrdersByPartner(PARTNER_NAME);
+  // Identity now comes from the authenticated session, not a hardcoded
+  // partner name. Supervisors see everything; a driver sees only the
+  // shipments assigned to the logistics company on their account.
+  const user = await requireStaff(["driver", "support", "admin"]);
+  const seesAll = user.role === "admin" || user.role === "support";
+  const assigned = seesAll
+    ? await getOrders()
+    : user.partnerName
+      ? await getOrdersByPartner(user.partnerName)
+      : [];
+
+  const scope = seesAll ? "Tous les envois" : (user.partnerName ?? "Aucune société rattachée");
+
   return (
     <div>
       <PageTitle
         title="Envois assignés"
-        subtitle={`${PARTNER_NAME} · ${assigned.length} commande(s)`}
+        subtitle={`${scope} · ${assigned.length} commande(s)`}
       />
+      {!seesAll && !user.partnerName && (
+        <Card className="mb-3 p-4 text-sm text-muted">
+          Votre compte n&apos;est rattaché à aucune société de transport. Demandez à
+          l&apos;administrateur de renseigner votre société pour voir vos envois.
+        </Card>
+      )}
       <div className="space-y-3">
         {assigned.map((o) => (
           <Link key={o.id} href={`/partner/orders/${o.id}`} className="block group">

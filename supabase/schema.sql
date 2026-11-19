@@ -121,3 +121,16 @@ insert into status_log (order_id, status, by_who, note, at) values
 insert into claims (order_number, customer, type, status, detail, opened) values
 ('YM-2026-0143','Cheikh Ba','Damaged','Investigating','Partner reported damaged outer carton on arrival in Dakar. Awaiting photos and content check.','2026-06-07'),
 ('YM-2026-0131','Mame Diarra','Refund request','Refunded','Customer cancelled before parcel drop-off. Refund issued.','2026-05-20');
+
+-- ---------- Data API grants (REQUIRED on projects created after 30 Oct 2026) ----------
+-- Supabase no longer grants Data API access to new tables in `public`
+-- automatically. Without these, every query from the app fails with
+-- "permission denied", including reads made with the secret key.
+-- Only service_role is granted: the app talks to the database exclusively
+-- from the server with the secret key, so anon/authenticated stay with no
+-- table access at all (matching the RLS-on-with-no-policies posture above).
+grant select, insert, update, delete on public.pricing_rules to service_role;
+grant select, insert, update, delete on public.orders        to service_role;
+grant select, insert, update, delete on public.status_log    to service_role;
+grant select, insert, update, delete on public.claims        to service_role;
+grant usage, select on all sequences in schema public to service_role;

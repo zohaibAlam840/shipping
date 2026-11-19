@@ -3,8 +3,19 @@
 // "pay online" as not-yet-available and falls back to pay-on-drop-off.
 import Stripe from "stripe";
 
+/**
+ * Phase 1 payment freeze (spec §2, §10): "no live customer payments during
+ * this phase". Online payment therefore stays OFF unless it is explicitly
+ * switched on with PAYMENTS_ENABLED=true, even when Stripe keys are present
+ * in the environment. The France → Senegal commercial model is also frozen
+ * pending legal review (§9, Legal Gate G0).
+ */
+export function arePaymentsEnabled(): boolean {
+  return process.env.PAYMENTS_ENABLED === "true";
+}
+
 export function isStripeConfigured(): boolean {
-  return Boolean(process.env.STRIPE_SECRET_KEY);
+  return arePaymentsEnabled() && Boolean(process.env.STRIPE_SECRET_KEY);
 }
 
 let client: Stripe | null = null;

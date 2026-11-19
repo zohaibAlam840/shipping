@@ -99,7 +99,27 @@ export async function getOrderById(id: string): Promise<Order | null> {
   return data ? toOrder(data) : null;
 }
 
+/**
+ * PUBLIC tracking lookup — tracking number only (SN-TRK-01).
+ *
+ * The order number is sequential (YNM-2026-0004), so accepting it here let
+ * anyone walk through other customers' parcels. Public tracking now matches
+ * the random tracking number alone; use `getOrderByReference` for internal
+ * lookups behind an authenticated screen.
+ */
 export async function getOrderByCode(code: string): Promise<Order | null> {
+  const c = code.trim().toUpperCase();
+  const { data, error } = await supabaseAdmin()
+    .from("orders")
+    .select(ORDER_SELECT)
+    .eq("tracking_number", c)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toOrder(data) : null;
+}
+
+/** INTERNAL lookup by order number or tracking number — staff screens only. */
+export async function getOrderByReference(code: string): Promise<Order | null> {
   const c = code.trim().toUpperCase();
   const { data, error } = await supabaseAdmin()
     .from("orders")

@@ -7,30 +7,41 @@ import { STATUSES, statusIndex, STATUS_FR, type Order } from "@/lib/data";
 import { Card, inputCls } from "@/components/ui";
 import { CheckIcon, AlertIcon, ArrowRightIcon } from "@/components/icons";
 
-const PARTNER_NAME = "DakarExpress 3PL";
-
 export function PartnerControls({ order }: { order: Order }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [showIncident, setShowIncident] = useState(false);
   const [incidentNote, setIncidentNote] = useState("");
   const [incidentSent, setIncidentSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const idx = statusIndex(order.status);
   const next = idx < STATUSES.length - 1 ? STATUSES[idx + 1] : null;
   const delivered = order.status === "Delivered";
 
+  // The actor is resolved from the session on the server — the client no
+  // longer says who it is.
   function advance() {
     if (!next) return;
+    setError(null);
     startTransition(async () => {
-      await advanceStatus(order.id, next, PARTNER_NAME);
+      const res = await advanceStatus(order.id, next);
+      if (res.error) {
+        setError(res.error);
+        return;
+      }
       router.refresh();
     });
   }
 
   function submitIncident() {
+    setError(null);
     startTransition(async () => {
-      await reportIncident(order.id, incidentNote, PARTNER_NAME);
+      const res = await reportIncident(order.id, incidentNote);
+      if (res.error) {
+        setError(res.error);
+        return;
+      }
       setIncidentSent(true);
       setShowIncident(false);
       router.refresh();
@@ -86,6 +97,11 @@ export function PartnerControls({ order }: { order: Order }) {
             </button>
           </div>
         </div>
+      )}
+      {error && (
+        <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3.5 text-sm font-medium text-red-700">
+          {error}
+        </p>
       )}
       {(incidentSent || order.incident) && (
         <p className="mt-3 rounded-xl bg-red-50 border border-red-200 p-3.5 text-sm text-red-700 font-medium">

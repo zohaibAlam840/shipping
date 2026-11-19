@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:pull": "prisma db pull",
+    "db:push": "prisma db push",
+    "db:check": "node scripts/check-db.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -23,6 +26,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "prisma": "7.10.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

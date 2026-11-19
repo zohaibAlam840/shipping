@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/auth";
+import { requireActor, isActorError } from "@/lib/roles";
+import { logAudit, recordEvent } from "@/lib/ledger";
 import { getOrderByCode } from "@/lib/db";
 import { sendOrderCreatedEmail, sendStatusEmail } from "@/lib/email";
 import {
@@ -19,6 +21,22 @@ import {
   type ParcelCategory,
   type PaymentStatus,
 } from "@/lib/data";
+
+// SN-TRK-01 — the public tracking code must not be guessable. The order
+// number stays sequential (YNM-2026-0004) as the internal/partner reference;
+// the tracking number is random, so one customer's code reveals nothing about
+// anyone else's parcel. Ambiguous characters (I, O, 0, 1) are left out.
+const TRACK_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function newTrackingNumber(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  let code = "";
+  for (const b of bytes) code += TRACK_ALPHABET[b % TRACK_ALPHABET.length];
+  return `YMT-${code}`;
+}
+
+/** Uniform result for mutating actions: `{ ok }` on success, `{ error }` on refusal. */
+export type ActionResult = { ok?: boolean; error?: string };
 
 export interface CreateOrderInput {
   origin: Country;
@@ -93,9 +111,10 @@ export async function createOrder(input: CreateOrderInput) {
 
   for (let attempt = 0; attempt < 6; attempt++) {
     const reference = `${prefix}${String(seq).padStart(4, "0")}`;
+    const tracking = newTrackingNumber();
     const row: Record<string, unknown> = {
       order_number: reference,
-      tracking_number: reference,
+      tracking_number: tracking,
       customer_name: user.name,
       customer_email: user.email,
       origin: input.origin,
@@ -116,6 +135,13 @@ export async function createOrder(input: CreateOrderInput) {
       if (input.dropoffPoint) row.dropoff_point = input.dropoffPoint;
       if (input.category) row.parcel_category = input.category;
       row.chargeable_weight = chargeable;
+      // INT-01: the route drives which screens, statuses and rules apply.
+      row.route_type =
+        input.origin === "France" && input.destination === "Senegal"
+          ? "FR_SN"
+          : input.origin === "Senegal" && input.destination === "France"
+            ? "SN_FR"
+            : "SN_SN";
     }
 
     const { data: created, error } = await db
@@ -131,14 +157,23 @@ export async function createOrder(input: CreateOrderInput) {
         by_who: user.name,
         note: customQuote ? "Devis personnalisé demandé (colis > 25 kg)" : null,
       });
-      void sendOrderCreatedEmail(user.email, user.name, reference);
+      // Custody ledger (SN-SCAN-03): the booking is a 'declared' event by the
+      // customer themselves, not a scan.
+      void recordEvent({
+        actor: { userId: user.id, name: user.name, role: "customer", isStaff: false },
+        eventType: "order.created",
+        orderId: created.id as string,
+        resultingStatus: "Order Created",
+        source: "declared",
+      });
+      void sendOrderCreatedEmail(user.email, user.name, tracking);
       revalidatePath("/dashboard");
       revalidatePath("/shipments");
       revalidatePath("/admin");
       return {
         id: created.id as string,
         orderNumber: reference,
-        trackingNumber: reference,
+        trackingNumber: tracking,
         total,
       };
     }
@@ -151,7 +186,7 @@ export async function createOrder(input: CreateOrderInput) {
     if (
       error &&
       (error.code === "PGRST204" ||
-        /dropoff_point|parcel_category|chargeable_weight/.test(error.message))
+        /dropoff_point|parcel_category|chargeable_weight|route_type/.test(error.message))
     ) {
       includeExtras = false;
       continue;
@@ -170,11 +205,14 @@ export async function updateOrderAdmin(
     total?: number;
     note?: string;
   },
-) {
+): Promise<ActionResult> {
+  const actor = await requireActor(["admin", "support"]);
+  if (isActorError(actor)) return actor;
+
   const db = supabaseAdmin();
   const { data: before, error: readErr } = await db
     .from("orders")
-    .select("status, customer_email, customer_name, order_number")
+    .select("status, payment, total, partner, customer_email, customer_name, order_number")
     .eq("id", id)
     .single();
   if (readErr) return { error: readErr.message };
@@ -196,10 +234,35 @@ export async function updateOrderAdmin(
     await db.from("status_log").insert({
       order_id: id,
       status: patch.status,
-      by_who: "Admin (Paris hub)",
+      by_who: actor.name,
       note: patch.note || null,
     });
+    // SN-TRK-03: an admin update is a MANUAL declaration, never a scan, and
+    // it stays distinguishable from scanned events for ever.
+    void recordEvent({
+      actor,
+      eventType: "order.status_change",
+      orderId: id,
+      resultingStatus: patch.status,
+      source: "manual",
+      reason: patch.note || undefined,
+    });
   }
+  // §3: sensitive actions must be logged, with before/after values.
+  void logAudit({
+    actor,
+    action: "order.update",
+    targetTable: "orders",
+    targetId: id,
+    before: {
+      status: before.status,
+      payment: before.payment,
+      total: before.total,
+      partner: before.partner,
+    },
+    after: update,
+    reason: patch.note || undefined,
+  });
   if (before.status !== patch.status) {
     void sendStatusEmail(before.customer_email, before.customer_name, before.order_number, patch.status);
   }
@@ -209,11 +272,39 @@ export async function updateOrderAdmin(
   return { ok: true };
 }
 
-export async function advanceStatus(id: string, next: OrderStatus, by: string) {
+/**
+ * Advance a shipment's status.
+ *
+ * The actor is resolved from the authenticated session on the server. It used
+ * to be passed in from the client as a plain string, which made every
+ * tracking event forgeable — SN-SCAN-03 requires the authenticated user and
+ * role on each event, so the parameter is gone.
+ */
+export async function advanceStatus(id: string, next: OrderStatus): Promise<ActionResult> {
+  const actor = await requireActor(["driver", "support", "admin"]);
+  if (isActorError(actor)) return actor;
+
   const db = supabaseAdmin();
+  const { data: before } = await db.from("orders").select("status").eq("id", id).single();
+
   const { error } = await db.from("orders").update({ status: next }).eq("id", id);
   if (error) return { error: error.message };
-  await db.from("status_log").insert({ order_id: id, status: next, by_who: by });
+  await db.from("status_log").insert({ order_id: id, status: next, by_who: actor.name });
+  void recordEvent({
+    actor,
+    eventType: "order.status_change",
+    orderId: id,
+    resultingStatus: next,
+    source: "manual",
+  });
+  void logAudit({
+    actor,
+    action: "order.advance_status",
+    targetTable: "orders",
+    targetId: id,
+    before: { status: before?.status ?? null },
+    after: { status: next },
+  });
   const { data: o } = await db
     .from("orders")
     .select("customer_email, customer_name, order_number")
@@ -226,7 +317,10 @@ export async function advanceStatus(id: string, next: OrderStatus, by: string) {
   return { ok: true };
 }
 
-export async function reportIncident(id: string, note: string, by: string) {
+export async function reportIncident(id: string, note: string): Promise<ActionResult> {
+  const actor = await requireActor(["driver", "merchant", "support", "admin"]);
+  if (isActorError(actor)) return actor;
+
   const db = supabaseAdmin();
   const { data: order, error: readErr } = await db
     .from("orders")
@@ -241,8 +335,24 @@ export async function reportIncident(id: string, note: string, by: string) {
   await db.from("status_log").insert({
     order_id: id,
     status: "Incident reported",
-    by_who: by,
+    by_who: actor.name,
     note,
+  });
+  void recordEvent({
+    actor,
+    eventType: "incident.reported",
+    orderId: id,
+    resultingStatus: "Issue",
+    source: "manual",
+    exceptionCode: "incident",
+    exceptionNote: note,
+  });
+  void logAudit({
+    actor,
+    action: "incident.report",
+    targetTable: "orders",
+    targetId: id,
+    reason: note,
   });
   await db.from("claims").insert({
     order_number: order.order_number,
@@ -259,7 +369,10 @@ export async function reportIncident(id: string, note: string, by: string) {
 export async function updateClaim(
   id: number,
   status: "Resolved" | "Refunded",
-) {
+): Promise<ActionResult> {
+  const actor = await requireActor(["admin", "support"]);
+  if (isActorError(actor)) return actor;
+
   const db = supabaseAdmin();
   const { data: claim, error: readErr } = await db
     .from("claims")
@@ -277,6 +390,13 @@ export async function updateClaim(
       .update({ payment: "Refunded" })
       .eq("order_number", claim.order_number);
   }
+  void logAudit({
+    actor,
+    action: "claim.update",
+    targetTable: "claims",
+    targetId: String(id),
+    after: { status },
+  });
   revalidatePath("/admin/claims");
   return { ok: true };
 }
