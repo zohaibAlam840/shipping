@@ -187,6 +187,20 @@ export default function BookPage() {
     <div className="mx-auto max-w-xl">
       <PageTitle title="Envoyer un colis" subtitle={`Étape ${step + 1} sur ${STEPS.length} — ${STEPS[step]}`} />
 
+      {/* Route selector (spec wireframe §4). France → Sénégal is the existing
+          service; Sénégal → Sénégal is the Phase 1 domestic service. */}
+      <div className="mb-5 flex gap-2">
+        <span className="h-11 flex-1 rounded-xl border border-brand bg-brand-light text-center text-sm font-semibold leading-[2.75rem] text-brand">
+          France → Sénégal
+        </span>
+        <Link
+          href="/book/senegal"
+          className="h-11 flex-1 rounded-xl border border-line text-center text-sm font-semibold leading-[2.75rem] text-muted transition hover:border-brand/40 hover:text-brand"
+        >
+          Sénégal → Sénégal
+        </Link>
+      </div>
+
       {/* Step indicator */}
       <div className="app-chrome flex gap-1.5 mb-5">
         {STEPS.map((s, i) => (

@@ -7,6 +7,7 @@ import { getSessionUser } from "@/lib/auth";
 import { requireActor, isActorError } from "@/lib/roles";
 import { logAudit, recordEvent } from "@/lib/ledger";
 import { getOrderByCode } from "@/lib/db";
+import { getPublicTracking, type PublicTracking } from "@/lib/tracking";
 import { sendOrderCreatedEmail, sendStatusEmail } from "@/lib/email";
 import {
   HOME_COLLECTION_FEE,
@@ -432,3 +433,14 @@ export async function logoutAdmin() {
   cookieStore.delete("admin_session");
 }
 
+
+/**
+ * Public tracking lookup (SN-TRK-01).
+ *
+ * Returns the customer-safe projection only — never pickup codes, actor
+ * names or internal records. See lib/tracking.ts.
+ */
+export async function trackParcels(code: string): Promise<PublicTracking | null> {
+  if (!code.trim()) return null;
+  return getPublicTracking(code);
+}

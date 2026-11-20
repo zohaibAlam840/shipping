@@ -6,6 +6,8 @@ import { getOrderById } from "@/lib/db";
 import { isStripeConfigured } from "@/lib/stripe";
 import { Card, PageTitle, StatusBadge, PaymentBadge, Timeline } from "@/components/ui";
 import { PayButton } from "@/components/pay-button";
+import { getParcelsByOrder, getPickupCodesForOrder } from "@/lib/parcels";
+import { ParcelCodesCard, type ParcelCodeRow } from "@/components/parcel-codes-card";
 import { CheckIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +25,19 @@ export default async function ShipmentDetailPage({
   const order = await getOrderById(id);
   // Only the owner may view their shipment.
   if (!order || order.customerEmail !== user.email) notFound();
+
+  // The sender's own parcels and pickup codes. Ownership is verified just
+  // above, so decrypting the codes here is safe (founder answer 2).
+  const parcelRows = await getParcelsByOrder(id);
+  const codes = parcelRows.length > 0 ? await getPickupCodesForOrder(id) : {};
+  const parcelCodes: ParcelCodeRow[] = parcelRows.map((p) => ({
+    id: p.id,
+    parcelRef: p.parcelRef,
+    seq: p.seq,
+    status: p.status,
+    weightKg: p.weightKg,
+    code: codes[p.id] ?? null,
+  }));
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -78,6 +93,8 @@ export default async function ShipmentDetailPage({
           </Card>
         )
       )}
+
+      <ParcelCodesCard parcels={parcelCodes} orderId={id} />
 
       <Card className="p-5 mb-4">
         <h2 className="font-bold text-ink mb-4">Suivi</h2>

@@ -36,7 +36,7 @@ function shell(title: string, body: string): string {
     <div style="border:1px solid #e3eae6;border-top:0;border-radius:0 0 14px 14px;padding:24px">
       <h2 style="margin:0 0 12px;color:#10261e">${title}</h2>
       <div style="color:#3a4a43;font-size:15px;line-height:1.6">${body}</div>
-      <p style="color:#5b6e66;font-size:12px;margin-top:24px">YonelMa · Expédition France → Sénégal</p>
+      <p style="color:#5b6e66;font-size:12px;margin-top:24px">YonelMa · Expédition de colis</p>
     </div>
   </div>`;
 }
@@ -68,6 +68,41 @@ export async function sendStatusEmail(
       `Bonjour ${name},<br/><br/>Le statut de votre colis <strong>${reference}</strong> est maintenant :
        <br/><br/><span style="display:inline-block;background:#e6f4ee;color:#0b8457;font-weight:bold;padding:8px 14px;border-radius:999px">${STATUS_FR[status]}</span>
        <br/><br/>Suivez chaque étape depuis votre espace YonelMa.`,
+    ),
+  );
+}
+
+/**
+ * One-time pickup code for the recipient (founder answer 2, 20 Nov 2026).
+ *
+ * Sent only when the recipient's email address is known; the sender can
+ * always read the code in their own account and pass it on by hand. The code
+ * never appears on the public tracking page.
+ */
+export async function sendPickupCodeEmail(opts: {
+  to: string;
+  recipientName: string;
+  parcelRef: string;
+  code: string;
+  relayName: string;
+  relayAddress: string;
+  openingHours?: string;
+}) {
+  await sendEmail(
+    opts.to,
+    `Votre colis ${opts.parcelRef} est disponible — YonelMa`,
+    shell(
+      "Votre colis vous attend 📦",
+      `Bonjour ${opts.recipientName},<br/><br/>
+       Votre colis <strong>${opts.parcelRef}</strong> est disponible au point relais
+       <strong>${opts.relayName}</strong>, ${opts.relayAddress}.
+       ${opts.openingHours ? `<br/>Horaires : ${opts.openingHours}.` : ""}
+       <br/><br/>
+       Présentez ce code de retrait au commerçant :
+       <div style="margin:18px 0;padding:16px;border-radius:12px;background:#eef7f2;
+                   text-align:center;font-size:30px;letter-spacing:6px;
+                   font-weight:bold;color:#0b8457">${opts.code}</div>
+       Ce code est personnel et confidentiel. Ne le communiquez qu'au moment du retrait.`,
     ),
   );
 }
