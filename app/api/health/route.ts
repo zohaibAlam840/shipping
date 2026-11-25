@@ -31,6 +31,23 @@ export async function GET() {
     EMAIL_FROM: Boolean(process.env.EMAIL_FROM),
   };
 
+  // A raw PostgREST call alongside the client call: supabase-js reports a
+  // transport failure as an empty message, which says nothing about the cause.
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  let rest: { status?: number; body?: string; error?: string } = {};
+  if (url && key) {
+    try {
+      const res = await fetch(url + "/rest/v1/relays?select=id&limit=1", {
+        headers: { apikey: key, Authorization: "Bearer " + key },
+        cache: "no-store",
+      });
+      rest = { status: res.status, body: (await res.text()).slice(0, 300) };
+    } catch (e) {
+      rest = { error: (e instanceof Error ? e.name + ": " + e.message : String(e)).slice(0, 300) };
+    }
+  }
+
   let database: { ok: boolean; relays?: number; error?: string };
   try {
     const { count, error } = await supabaseAdmin()
@@ -50,8 +67,17 @@ export async function GET() {
       ok,
       checkedAt: new Date().toISOString(),
       supabaseHost: host(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      // Which *kind* of key is configured, never the key itself.
+      secretKeyKind: key
+        ? key.startsWith("sb_secret_")
+          ? "sb_secret"
+          : key.startsWith("eyJ")
+            ? "legacy JWT"
+            : "unrecognised"
+        : null,
       env,
       database,
+      rest,
     },
     { status: ok ? 200 : 503, headers: { "Cache-Control": "no-store" } },
   );
