@@ -57,13 +57,13 @@ export default function AdminLoginPage() {
           <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-brand to-brand-dark" />
           
           <form className="space-y-5" onSubmit={handleSubmit}>
-            <Field label="Identifiant">
+            <Field label="Identifiant ou e-mail">
               <input
                 type="text"
                 name="username"
                 required
                 className={inputCls}
-                placeholder="Saisissez l'identifiant admin"
+                placeholder="vous@yonelma.sn"
                 autoComplete="username"
                 disabled={loading}
               />

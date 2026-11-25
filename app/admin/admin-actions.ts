@@ -10,11 +10,13 @@
 // (§3: sensitive actions must be logged).
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
-import { requireActor, isActorError } from "@/lib/roles";
-import { logAudit } from "@/lib/ledger";
+import { requireActor, isActorError, type AppRole } from "@/lib/roles";
+import { createAuthUser, setAuthPassword, generateTempPassword } from "@/lib/staff";
+import { logAudit, recordEvent } from "@/lib/ledger";
 import type { ActionResult } from "@/app/actions";
 import type { CommercialStatus, ServiceType } from "@/lib/sn-domain";
 import type { RelayStatus } from "@/lib/relays";
+import type { RouteStatus } from "@/lib/routes";
 
 
 function revalidateAdmin(extra?: string) {
@@ -453,5 +455,273 @@ export async function removeNonOperatingDay(id: string): Promise<ActionResult> {
     targetId: id,
   });
   revalidateAdmin();
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Staff accounts (SN-REL-03, SN-REL-05)
+// ---------------------------------------------------------------------------
+// The administrator invites merchants and drivers, grants shop-specific
+// access and resets credentials — all without developer involvement.
+
+export interface StaffInput {
+  email: string;
+  fullName: string;
+  phone?: string;
+  role: AppRole;
+  relayIds?: string[];
+  partnerName?: string;
+}
+
+/**
+ * Create a staff account and return a one-time temporary password.
+ *
+ * The password is shown to the administrator once so they can pass it on;
+ * it is never stored in readable form and cannot be retrieved later — only
+ * reset.
+ */
+export async function inviteStaff(
+  input: StaffInput,
+): Promise<ActionResult & { tempPassword?: string }> {
+  const actor = await requireActor(["admin"]);
+  if (isActorError(actor)) return actor;
+
+  const email = input.email.trim().toLowerCase();
+  if (!email || !email.includes("@")) return { error: "Adresse e-mail invalide." };
+  if (!input.fullName.trim()) return { error: "Le nom complet est obligatoire." };
+  if (input.role === "customer") return { error: "Choisissez un rôle du personnel." };
+
+  const tempPassword = generateTempPassword();
+  const created = await createAuthUser(email, tempPassword, input.fullName.trim());
+  if (created.error || !created.id) return { error: created.error ?? "Création impossible." };
+
+  const db = supabaseAdmin();
+  const { error } = await db.from("app_users").upsert(
+    {
+      id: created.id,
+      email,
+      full_name: input.fullName.trim(),
+      phone: input.phone?.trim() || null,
+      role: input.role,
+      status: "invited",
+      partner_name: input.partnerName?.trim() || null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "id" },
+  );
+  if (error) return { error: error.message };
+
+  // A merchant may act only on the shops granted here (AT-02).
+  if (input.relayIds?.length) {
+    await db
+      .from("relay_users")
+      .upsert(
+        input.relayIds.map((relay_id) => ({ relay_id, user_id: created.id! })),
+        { onConflict: "relay_id,user_id" },
+      );
+  }
+
+  void logAudit({
+    actor,
+    action: "staff.invite",
+    targetTable: "app_users",
+    targetId: created.id,
+    after: { email, role: input.role, relays: input.relayIds ?? [] },
+  });
+
+  revalidatePath("/admin/staff");
+  return { ok: true, tempPassword };
+}
+
+/** Change a staff member's role, shops or company. */
+export async function updateStaff(
+  userId: string,
+  patch: { role?: AppRole; relayIds?: string[]; partnerName?: string | null; phone?: string | null },
+): Promise<ActionResult> {
+  const actor = await requireActor(["admin"]);
+  if (isActorError(actor)) return actor;
+
+  const db = supabaseAdmin();
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (patch.role) update.role = patch.role;
+  if (patch.partnerName !== undefined) update.partner_name = patch.partnerName || null;
+  if (patch.phone !== undefined) update.phone = patch.phone || null;
+
+  const { error } = await db.from("app_users").update(update).eq("id", userId);
+  if (error) return { error: error.message };
+
+  if (patch.relayIds) {
+    // Replace the grant set so removing a shop actually removes access.
+    await db.from("relay_users").delete().eq("user_id", userId);
+    if (patch.relayIds.length > 0) {
+      await db
+        .from("relay_users")
+        .insert(patch.relayIds.map((relay_id) => ({ relay_id, user_id: userId })));
+    }
+  }
+
+  void logAudit({
+    actor,
+    action: "staff.update",
+    targetTable: "app_users",
+    targetId: userId,
+    after: { ...update, relays: patch.relayIds },
+  });
+  revalidatePath("/admin/staff");
+  return { ok: true };
+}
+
+/** Suspend or reactivate an account. A suspended user fails every guard. */
+export async function setStaffStatus(
+  userId: string,
+  status: "active" | "suspended",
+): Promise<ActionResult> {
+  const actor = await requireActor(["admin"]);
+  if (isActorError(actor)) return actor;
+
+  const { error } = await supabaseAdmin()
+    .from("app_users")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", userId);
+  if (error) return { error: error.message };
+
+  void logAudit({
+    actor,
+    action: `staff.${status}`,
+    targetTable: "app_users",
+    targetId: userId,
+    after: { status },
+  });
+  revalidatePath("/admin/staff");
+  return { ok: true };
+}
+
+/** Issue a new temporary password, shown once to the administrator. */
+export async function resetStaffPassword(
+  userId: string,
+): Promise<ActionResult & { tempPassword?: string }> {
+  const actor = await requireActor(["admin"]);
+  if (isActorError(actor)) return actor;
+
+  const tempPassword = generateTempPassword();
+  const failure = await setAuthPassword(userId, tempPassword);
+  if (failure) return { error: failure };
+
+  await supabaseAdmin()
+    .from("app_users")
+    .update({ status: "invited", updated_at: new Date().toISOString() })
+    .eq("id", userId);
+
+  void logAudit({
+    actor,
+    action: "staff.reset_password",
+    targetTable: "app_users",
+    targetId: userId,
+  });
+  revalidatePath("/admin/staff");
+  return { ok: true, tempPassword };
+}
+
+// ---------------------------------------------------------------------------
+// Driver rounds (spec §10)
+// ---------------------------------------------------------------------------
+
+export interface RouteInput {
+  id?: string;
+  code: string;
+  driverId: string | null;
+  routeDate: string;
+  originTown?: string;
+  destinationTown?: string;
+  status?: RouteStatus;
+}
+
+export async function saveRoute(input: RouteInput): Promise<ActionResult & { id?: string }> {
+  const actor = await requireActor(["admin", "support"]);
+  if (isActorError(actor)) return actor;
+  if (!input.code.trim()) return { error: "Le code de la tournée est obligatoire." };
+  if (!input.routeDate) return { error: "Choisissez la date de la tournée." };
+
+  const db = supabaseAdmin();
+  const row: Record<string, unknown> = {
+    code: input.code.trim().toUpperCase(),
+    driver_id: input.driverId || null,
+    route_date: input.routeDate,
+    origin_town: input.originTown?.trim() || null,
+    destination_town: input.destinationTown?.trim() || null,
+  };
+  if (input.status) row.status = input.status;
+
+  if (input.id) {
+    const { error } = await db.from("driver_routes").update(row).eq("id", input.id);
+    if (error) return { error: error.message };
+    void logAudit({ actor, action: "route.update", targetTable: "driver_routes", targetId: input.id, after: row });
+    revalidatePath("/admin/routes");
+    return { ok: true, id: input.id };
+  }
+
+  const { data: created, error } = await db.from("driver_routes").insert(row).select("id").single();
+  if (error) {
+    return { error: error.code === "23505" ? "Ce code de tournée existe déjà." : error.message };
+  }
+  void logAudit({
+    actor,
+    action: "route.create",
+    targetTable: "driver_routes",
+    targetId: created.id as string,
+    after: row,
+  });
+  revalidatePath("/admin/routes");
+  return { ok: true, id: created.id as string };
+}
+
+export async function setRouteStatus(id: string, status: RouteStatus): Promise<ActionResult> {
+  const actor = await requireActor(["admin", "support"]);
+  if (isActorError(actor)) return actor;
+
+  const { error } = await supabaseAdmin().from("driver_routes").update({ status }).eq("id", id);
+  if (error) return { error: error.message };
+  void logAudit({ actor, action: `route.${status}`, targetTable: "driver_routes", targetId: id, after: { status } });
+  revalidatePath("/admin/routes");
+  revalidatePath("/driver");
+  return { ok: true };
+}
+
+/** Put parcels on a round, or take them off it when `routeId` is null. */
+export async function assignParcelsToRoute(
+  parcelIds: string[],
+  routeId: string | null,
+): Promise<ActionResult> {
+  const actor = await requireActor(["admin", "support"]);
+  if (isActorError(actor)) return actor;
+  if (parcelIds.length === 0) return { error: "Sélectionnez au moins un colis." };
+
+  const { error } = await supabaseAdmin()
+    .from("parcels")
+    .update({ route_id: routeId, updated_at: new Date().toISOString() })
+    .in("id", parcelIds);
+  if (error) return { error: error.message };
+
+  // Assignment is an operational change, not a custody change: the parcel
+  // does not move until a driver actually scans it.
+  for (const parcelId of parcelIds) {
+    void recordEvent({
+      actor,
+      eventType: routeId ? "route.assigned" : "route.unassigned",
+      parcelId,
+      routeId: routeId ?? undefined,
+      source: "manual",
+    });
+  }
+  void logAudit({
+    actor,
+    action: routeId ? "route.assign_parcels" : "route.unassign_parcels",
+    targetTable: "driver_routes",
+    targetId: routeId ?? "",
+    after: { parcels: parcelIds.length },
+  });
+
+  revalidatePath("/admin/routes");
+  revalidatePath("/driver");
   return { ok: true };
 }

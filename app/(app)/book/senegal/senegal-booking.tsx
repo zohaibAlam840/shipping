@@ -148,7 +148,8 @@ export function SenegalBooking({
 
           <div className="mt-5 rounded-xl bg-brand-light p-4 text-left">
             <p className="text-xs font-semibold text-brand">
-              {done.parcelRefs?.length} colis · {xof(done.total ?? 0)}
+              {done.parcelRefs?.length} colis ·{" "}
+              {done.needsQuote ? "Sur devis" : xof(done.total ?? 0)}
             </p>
             <ul className="mt-2 space-y-1">
               {done.parcelRefs?.map((ref) => (
@@ -158,6 +159,13 @@ export function SenegalBooking({
               ))}
             </ul>
           </div>
+
+          {done.needsQuote && (
+            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-left text-sm text-amber-800">
+              Un de vos colis dépasse la grille tarifaire. Notre équipe vous communiquera le
+              prix sous 24 heures avant l&apos;expédition.
+            </p>
+          )}
 
           {done.transportDate && (
             <p className="mt-4 text-sm text-muted">

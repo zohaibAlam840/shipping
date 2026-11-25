@@ -14,17 +14,12 @@ import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/auth";
 
-export type AppRole = "customer" | "admin" | "merchant" | "driver" | "support";
+import type { AppRole } from "@/lib/roles-shared";
 
-export const STAFF_ROLES: AppRole[] = ["admin", "merchant", "driver", "support"];
-
-export const ROLE_FR: Record<AppRole, string> = {
-  customer: "Client",
-  admin: "Administrateur Sénégal",
-  merchant: "Commerçant point relais",
-  driver: "Chauffeur / coursier",
-  support: "Support / superviseur",
-};
+// Labels and role names are pure values — re-exported so server code can
+// import everything from here, while client components import the pure
+// module directly and never pull Supabase into the bundle.
+export * from "@/lib/roles-shared";
 
 export interface AppUser {
   id: string;

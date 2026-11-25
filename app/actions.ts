@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getSessionUser } from "@/lib/auth";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { requireActor, isActorError } from "@/lib/roles";
 import { logAudit, recordEvent } from "@/lib/ledger";
 import { getOrderByCode } from "@/lib/db";
@@ -407,10 +408,56 @@ export async function trackByCode(code: string): Promise<Order | null> {
   return getOrderByCode(code);
 }
 
+/**
+ * Console sign-in.
+ *
+ * Accepts a real staff account (e-mail + password) first, so every admin
+ * action is attributed to a named person as §3 requires. The shared
+ * environment password stays as a fallback for the demo environment and for
+ * recovering access when no staff account exists yet.
+ */
 export async function loginAdmin(formData: FormData) {
-  const username = formData.get("username") as string;
-  const password = formData.get("password") as string;
+  const username = (formData.get("username") as string)?.trim() ?? "";
+  const password = (formData.get("password") as string) ?? "";
 
+  // ---- Staff account ----
+  if (username.includes("@")) {
+    const supabase = await createSupabaseServer();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: username.toLowerCase(),
+      password,
+    });
+    if (!error && data.user) {
+      const { data: profile } = await supabaseAdmin()
+        .from("app_users")
+        .select("role, status")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
+      const role = (profile as { role?: string } | null)?.role;
+      const status = (profile as { status?: string } | null)?.status;
+
+      if (role === "admin" || role === "support") {
+        if (status === "suspended") {
+          await supabase.auth.signOut();
+          return { error: "Ce compte est suspendu." };
+        }
+        const cookieStore = await cookies();
+        cookieStore.set("admin_session", "authenticated", {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          maxAge: 60 * 60 * 24,
+          path: "/",
+        });
+        return { success: true };
+      }
+      // Signed in, but not console staff — don't leave a half-open session.
+      await supabase.auth.signOut();
+      return { error: "Ce compte n'a pas accès à la console." };
+    }
+  }
+
+  // ---- Shared environment password (fallback) ----
   const adminUser = process.env.ADMIN_USERNAME || "admin";
   const adminPass = process.env.ADMIN_PASSWORD;
 

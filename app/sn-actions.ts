@@ -10,7 +10,8 @@ import { newPickupCode } from "@/lib/pickup-code";
 import { nextParcelRefs, getPickupCodesForOrder } from "@/lib/parcels";
 import { getRelayById } from "@/lib/relays";
 import { quoteDomestic, scheduleForDropoff, toISODate, serviceTypeFor } from "@/lib/sn-domain";
-import { sendOrderCreatedEmail, sendPickupCodeEmail } from "@/lib/email";
+import { sendOrderCreatedEmail } from "@/lib/email";
+import { dispatchPickupCode, anyDelivered } from "@/lib/notifications";
 import type { ActionResult } from "@/app/actions";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -45,6 +46,8 @@ export interface DomesticBookingResult extends ActionResult {
   total?: number;
   currency?: string;
   parcelRefs?: string[];
+  /** True when a parcel fell outside the price grid and needs a manual quote. */
+  needsQuote?: boolean;
   transportDate?: string | null;
   deliveryFrom?: string | null;
   deliveryTo?: string | null;
@@ -117,7 +120,11 @@ export async function createDomesticOrder(
   // Price each parcel on its own weight, then sum (uniform regional model).
   let total = 0;
   let currency = "XOF";
-  const parcelPrices: number[] = [];
+  // A parcel heavier than the heaviest configured band has no grid price.
+  // Rather than refusing the booking, the order is recorded "sur devis" with
+  // a zero total so the team can quote it — the same convention the
+  // France → Sénégal route already uses for parcels above 25 kg.
+  let needsQuote = false;
   for (const p of input.parcels) {
     const quote = await quoteDomestic({
       originZoneId,
@@ -126,14 +133,13 @@ export async function createDomesticOrder(
       weightKg: p.weightKg,
     });
     if (!quote) {
-      return {
-        error: `Aucun tarif pour un colis de ${p.weightKg} kg. Contactez-nous pour un devis.`,
-      };
+      needsQuote = true;
+      continue;
     }
-    parcelPrices.push(quote.price);
     total += quote.price;
     currency = quote.currency;
   }
+  if (needsQuote) total = 0;
 
   // When the parcels actually move, and the window quoted to the customer.
   const plan = await scheduleForDropoff(new Date(), input.originRelayId);
@@ -267,6 +273,15 @@ export async function createDomesticOrder(
     });
   }
 
+  if (needsQuote) {
+    await db.from("status_log").insert({
+      order_id: orderId,
+      status: "Order Created",
+      by_who: user.name,
+      note: "Devis personnalisé requis — colis hors grille tarifaire",
+    });
+  }
+
   void sendOrderCreatedEmail(user.email, user.name, tracking);
 
   revalidatePath("/dashboard");
@@ -281,6 +296,7 @@ export async function createDomesticOrder(
     total,
     currency,
     parcelRefs: (createdParcels ?? []).map((p: any) => p.parcel_ref),
+    needsQuote,
     transportDate: plan.transportDate ? toISODate(plan.transportDate) : null,
     deliveryFrom: plan.deliveryFrom ? toISODate(plan.deliveryFrom) : null,
     deliveryTo: plan.deliveryTo ? toISODate(plan.deliveryTo) : null,
@@ -335,7 +351,7 @@ export async function sendPickupCodeToRecipient(parcelId: string): Promise<Actio
 
   const { data: order } = await db
     .from("orders")
-    .select("recipient_name, recipient_email")
+    .select("recipient_name, recipient_email, recipient_phone")
     .eq("id", (parcel as any).order_id)
     .maybeSingle();
 
@@ -350,22 +366,35 @@ export async function sendPickupCodeToRecipient(parcelId: string): Promise<Actio
     ? await getRelayById((parcel as any).destination_relay_id)
     : null;
 
-  await sendPickupCodeEmail({
-    to,
-    recipientName: (order as any)?.recipient_name ?? "",
-    parcelRef: (parcel as any).parcel_ref,
-    code,
-    relayName: relay?.name ?? "",
-    relayAddress: relay?.address ?? "",
-    openingHours: relay
-      ? Object.values(relay.openingHours).filter(Boolean).join(" · ")
-      : undefined,
-  });
+  // Goes through the configurable channel layer, so adding SMS or WhatsApp
+  // later needs no change here (SN-NAT-06).
+  const results = await dispatchPickupCode(
+    {
+      name: (order as any)?.recipient_name ?? "",
+      email: to,
+      phone: (order as any)?.recipient_phone ?? null,
+    },
+    {
+      parcelRef: (parcel as any).parcel_ref,
+      code,
+      relayName: relay?.name ?? "",
+      relayAddress: relay?.address ?? "",
+      openingHours: relay
+        ? Object.values(relay.openingHours).filter(Boolean).join(" · ")
+        : undefined,
+    },
+  );
 
-  await db
-    .from("parcels")
-    .update({ pickup_code_sent_at: new Date().toISOString(), pickup_code_sent_to: to })
-    .eq("id", parcelId);
+  if (anyDelivered(results)) {
+    await db
+      .from("parcels")
+      .update({ pickup_code_sent_at: new Date().toISOString(), pickup_code_sent_to: to })
+      .eq("id", parcelId);
+    return { ok: true };
+  }
 
+  // Nothing went out — the sender still has the code in their account and can
+  // pass it on, so this is reported, not treated as a failure of the scan.
+  console.warn("[pickup-code] not delivered:", JSON.stringify(results));
   return { ok: true };
 }
