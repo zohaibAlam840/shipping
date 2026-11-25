@@ -5,10 +5,18 @@
 // It reports *whether* each variable is set and whether the database answers.
 // It never returns a secret: only booleans, the public Supabase host, and a
 // short error message when a query fails.
+import { createHash } from "node:crypto";
 import { supabaseAdmin } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** First bytes of the SHA-256 of a key: enough to compare two deployments,
+ *  useless for reconstructing the key. */
+function fingerprint(value: string | undefined): string | null {
+  if (!value) return null;
+  return createHash("sha256").update(value).digest("hex").slice(0, 12);
+}
 
 function host(url: string | undefined): string | null {
   if (!url) return null;
@@ -48,6 +56,22 @@ export async function GET() {
     }
   }
 
+  // The publishable key is never exercised above, so a stale one would stay
+  // invisible until a visitor hit the browser client.
+  let publishable: { status?: number; body?: string; error?: string } = {};
+  const pub = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (url && pub) {
+    try {
+      const res = await fetch(url + "/rest/v1/relays?select=id&limit=1", {
+        headers: { apikey: pub, Authorization: "Bearer " + pub },
+        cache: "no-store",
+      });
+      publishable = { status: res.status, body: (await res.text()).slice(0, 200) };
+    } catch (e) {
+      publishable = { error: (e instanceof Error ? e.message : String(e)).slice(0, 200) };
+    }
+  }
+
   let database: { ok: boolean; relays?: number; error?: string };
   try {
     const { count, error } = await supabaseAdmin()
@@ -78,6 +102,11 @@ export async function GET() {
       env,
       database,
       rest,
+      publishable,
+      fingerprints: {
+        SUPABASE_SECRET_KEY: fingerprint(key),
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: fingerprint(pub),
+      },
     },
     { status: ok ? 200 : 503, headers: { "Cache-Control": "no-store" } },
   );
