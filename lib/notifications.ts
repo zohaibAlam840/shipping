@@ -81,7 +81,7 @@ export async function dispatchPickupCode(
             results.push({ channel, delivered: false, reason: "no_address" });
             break;
           }
-          await sendPickupCodeEmail({
+          const sent = await sendPickupCodeEmail({
             to: recipient.email,
             recipientName: recipient.name,
             parcelRef: payload.parcelRef,
@@ -90,7 +90,9 @@ export async function dispatchPickupCode(
             relayAddress: payload.relayAddress,
             openingHours: payload.openingHours,
           });
-          results.push({ channel, delivered: true });
+          // The provider’s verdict decides this, not the fact that we tried:
+          // the caller stamps pickup_code_sent_at from it.
+          results.push({ channel, delivered: sent.ok, reason: sent.error });
           break;
         }
         case "sms":

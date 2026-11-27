@@ -7,10 +7,25 @@ export function isEmailConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM);
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<void> {
-  if (!isEmailConfigured()) return; // no-op until configured
+export interface SendResult {
+  ok: boolean;
+  /** Why it did not go out: a provider message, or "not_configured". */
+  error?: string;
+}
+
+/**
+ * Send one message. Never throws — a notification failure must not break the
+ * flow that triggered it — but it does report and log what happened, because
+ * a silently discarded rejection is indistinguishable from a delivery.
+ *
+ * Note for the shared sending domain (onboarding@resend.dev): Resend accepts
+ * it without any DNS, but delivers ONLY to the address that owns the account.
+ * Every other recipient comes back as an error here rather than arriving.
+ */
+async function sendEmail(to: string, subject: string, html: string): Promise<SendResult> {
+  if (!isEmailConfigured()) return { ok: false, error: "not_configured" };
   try {
-    await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
@@ -23,8 +38,15 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
         html,
       }),
     });
-  } catch {
-    // Never let a notification failure break the main flow.
+    if (res.ok) return { ok: true };
+    const body = await res.text().catch(() => "");
+    const error = `${res.status} ${body.slice(0, 200)}`;
+    console.error("[email] rejected by provider:", error);
+    return { ok: false, error };
+  } catch (e) {
+    const error = e instanceof Error ? e.message : String(e);
+    console.error("[email] send failed:", error);
+    return { ok: false, error };
   }
 }
 
@@ -42,7 +64,7 @@ function shell(title: string, body: string): string {
 }
 
 export async function sendOrderCreatedEmail(to: string, name: string, reference: string) {
-  await sendEmail(
+  return sendEmail(
     to,
     `Commande ${reference} créée — YonelMa`,
     shell(
@@ -60,7 +82,7 @@ export async function sendStatusEmail(
   reference: string,
   status: OrderStatus,
 ) {
-  await sendEmail(
+  return sendEmail(
     to,
     `Mise à jour ${reference} : ${STATUS_FR[status]} — YonelMa`,
     shell(
@@ -88,7 +110,7 @@ export async function sendPickupCodeEmail(opts: {
   relayAddress: string;
   openingHours?: string;
 }) {
-  await sendEmail(
+  return sendEmail(
     opts.to,
     `Votre colis ${opts.parcelRef} est disponible — YonelMa`,
     shell(
